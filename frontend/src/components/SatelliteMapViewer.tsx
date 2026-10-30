@@ -261,7 +261,7 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
 
       // 2. Add NDWI Spectral Tile Layer
       try {
-        const ndwiTile = L.tileLayer("http://localhost:8000/api/tiles/{z}/{x}/{y}.png", {
+        const ndwiTile = L.tileLayer("http://localhost:8001/api/tiles/{z}/{x}/{y}.png", {
           maxZoom: 18,
           opacity: 0.7,
           zIndex: 5,
@@ -395,7 +395,7 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
             <div><strong>Encroachment Loss:</strong> <span style="color: #ef4444; font-weight: bold;">-${wb.loss}</span></div>
           </div>
           <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0; display: flex; gap: 6px;">
-            <a href="http://localhost:8000/api/reports/eviction-notice/${wb.id}" target="_blank" style="display: inline-block; flex: 1; text-align: center; background: #dc2626; color: #ffffff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; font-family: monospace;">
+            <a href="http://localhost:8001/api/reports/eviction-notice/${wb.id}" target="_blank" style="display: inline-block; flex: 1; text-align: center; background: #dc2626; color: #ffffff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; font-family: monospace;">
               PDF Eviction Pack
             </a>
           </div>
@@ -750,7 +750,7 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
 
         <div className="flex items-center gap-3 shrink-0">
           <a
-            href={`http://localhost:8000/api/reports/eviction-notice/${selectedWaterbody.id || "WB-PALLIKARANAI"}`}
+            href={`http://localhost:8001/api/reports/eviction-notice/${selectedWaterbody.id || "WB-PALLIKARANAI"}`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 rounded-[8px] bg-[var(--color-danger)] hover:opacity-90 text-white text-xs font-bold font-mono-val flex items-center gap-2 transition-all shadow-sm"

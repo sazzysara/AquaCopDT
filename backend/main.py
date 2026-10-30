@@ -142,6 +142,14 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: Optional[str] = "citizen"
+    department: Optional[str] = None
+    badge_id: Optional[str] = None
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -159,8 +167,7 @@ class AssignSurveyRequest(BaseModel):
 
 
 # ── Auth Endpoints ───────────────────────────────────────────────────────────
-@app.post("/api/auth/login", response_model=TokenResponse)
-def login(creds: LoginRequest, db: Session = Depends(get_db)):
+def _do_login(creds: LoginRequest, db: Session):
     user = db.query(User).filter(User.email == creds.email).first()
     if not user or not verify_password(creds.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -178,6 +185,50 @@ def login(creds: LoginRequest, db: Session = Depends(get_db)):
             "badge_id": user.badge_id,
         }
     }
+
+def _do_signup(data: SignupRequest, db: Session):
+    existing = db.query(User).filter(User.email == data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    import uuid
+    user_id = f"usr-{uuid.uuid4().hex[:8]}"
+    new_user = User(
+        id=user_id,
+        email=data.email,
+        name=data.name,
+        hashed_password=hash_password(data.password),
+        role=data.role or "citizen",
+        department=data.department,
+        badge_id=data.badge_id,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    token = create_access_token(data={"sub": new_user.id, "role": new_user.role, "name": new_user.name})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "email": new_user.email,
+            "role": new_user.role,
+            "department": new_user.department,
+            "badge_id": new_user.badge_id,
+        }
+    }
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+@app.post("/auth/login", response_model=TokenResponse)
+def login(creds: LoginRequest, db: Session = Depends(get_db)):
+    return _do_login(creds, db)
+
+@app.post("/api/auth/signup", response_model=TokenResponse)
+@app.post("/auth/signup", response_model=TokenResponse)
+def signup(data: SignupRequest, db: Session = Depends(get_db)):
+    return _do_signup(data, db)
 
 @app.get("/api/auth/me")
 def get_profile(current_user: Optional[User] = Depends(get_current_user)):

@@ -150,7 +150,7 @@ export default function AquaCopApp() {
     }
 
     // Fetch real-time waterbodies from FastAPI backend
-    fetch("http://localhost:8000/api/waterbodies")
+    fetch("http://localhost:8001/api/waterbodies")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -182,7 +182,7 @@ export default function AquaCopApp() {
       .catch((e) => console.log("Using cached waterbodies", e));
 
     // Fetch real-time alerts from FastAPI backend
-    fetch("http://localhost:8000/api/alerts")
+    fetch("http://localhost:8001/api/alerts")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -219,7 +219,7 @@ export default function AquaCopApp() {
       .catch((e) => console.log("Using cached alerts", e));
 
     // Fetch real-time complaints from FastAPI backend
-    fetch("http://localhost:8000/api/complaints")
+    fetch("http://localhost:8001/api/complaints")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {

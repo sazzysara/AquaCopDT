@@ -330,7 +330,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
     formData.append("latitude", latitude);
     formData.append("longitude", longitude);
 
-    fetch("http://localhost:8000/api/complaints", {
+    fetch("http://localhost:8001/api/complaints", {
       method: "POST",
       body: formData,
     })
@@ -1485,7 +1485,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
                   {activeComplaintDetails.documents.map((doc, idx) => (
                     <a
                       key={idx}
-                      href={`http://localhost:8000/api/reports/eviction-notice/${activeComplaintDetails.id}`}
+                      href={`http://localhost:8001/api/reports/eviction-notice/${activeComplaintDetails.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       download={`AquaCop_Evidence_${activeComplaintDetails.id}.pdf`}
@@ -1515,7 +1515,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
 
               <div className="flex items-center gap-2">
                 <a
-                  href={`http://localhost:8000/api/reports/eviction-notice/${activeComplaintDetails.id}`}
+                  href={`http://localhost:8001/api/reports/eviction-notice/${activeComplaintDetails.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   download={`AquaCop_Evidence_Dossier_${activeComplaintDetails.id}.pdf`}

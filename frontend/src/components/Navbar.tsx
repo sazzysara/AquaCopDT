@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Technical Report PDF Download Link */}
         <a
-          href="http://localhost:8000/api/reports/technical-report"
+          href="http://localhost:8001/api/reports/technical-report"
           target="_blank"
           rel="noopener noreferrer"
           download="AquaCop_Technical_Architecture_Report.pdf"
