@@ -1,0 +1,15 @@
+# OS Files
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# Dependencies & Build artifacts (safety net for root)
+**/node_modules/
+**/venv/
+**/.venv/
+**/__pycache__/
+**/.next/
+**/build/
+**/dist/
+**/cache/
+*.py[cod]
