@@ -50,6 +50,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   const [selectedEvidenceType, setSelectedEvidenceType] = useState<string>("Geo-Tagged Photos + Survey Deed");
   const [isSimulatingSatellite, setIsSimulatingSatellite] = useState(false);
   const [submissionComplete, setSubmissionComplete] = useState(false);
+  const [submittedAnonId, setSubmittedAnonId] = useState<string>("");
   const [uploadedFileNames, setUploadedFileNames] = useState<string[]>([
     "site_excavation_timestamped.jpg",
     "cadastral_survey_deed_1985.pdf",
@@ -86,9 +87,11 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
       .then((res) => {
         setIsSimulatingSatellite(false);
         const trackingId = res.tracking_id || `AQ-2026-CHN-${Math.floor(1000 + Math.random() * 9000)}`;
+        const anonymousId = res.anonymous_id || `ANON-CTZ-${trackingId.slice(-4)}`;
         const matchedWb = waterbodies.find((w) => w.name === selectedWaterbody);
         const newComplaint: CitizenComplaintItem = {
           id: trackingId,
+          anonymousId,
           citizenName: citizenName || currentUser?.name || "Verified Citizen Informant",
           citizenPhone: citizenPhone || "+91 98400 00000",
           waterbodyName: selectedWaterbody,
@@ -113,14 +116,18 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
             { name: "cadastral_survey_deed_1985.pdf", size: "1.2 MB", type: "PDF Document" }
           ]
         };
+        setSubmittedAnonId(anonymousId);
         onSubmitComplaint(newComplaint);
         setSubmissionComplete(true);
       })
       .catch(() => {
         setIsSimulatingSatellite(false);
+        const trackingId = `WTN-2026-${Math.floor(485 + Math.random() * 500)}`;
+        const anonymousId = `ANON-CTZ-${trackingId.slice(-4)}`;
         const matchedWb = waterbodies.find((w) => w.name === selectedWaterbody);
         const newComplaint: CitizenComplaintItem = {
-          id: `WTN-2026-${Math.floor(485 + Math.random() * 500)}`,
+          id: trackingId,
+          anonymousId,
           citizenName: citizenName || currentUser?.name || "Verified Citizen Informant",
           citizenPhone: citizenPhone || "+91 98400 00000",
           waterbodyName: selectedWaterbody,
@@ -240,6 +247,10 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
             </div>
             <div className="p-3 rounded-[8px] bg-[var(--status-verified-bg)] border border-[var(--status-verified-border)] box-outline inline-block text-xs font-mono-val text-[var(--status-verified-text)] font-semibold">
               RECORD STATUS: AI SATELLITE ANOMALY VERIFIED · PRIORITY LEVEL 1
+            </div>
+            <div className="p-3 rounded-[8px] bg-amber-500/10 border border-amber-500/30 text-xs font-mono-val text-amber-800 dark:text-amber-300 font-semibold max-w-md mx-auto">
+              🛡️ WHISTLEBLOWER TOKEN: <strong>{submittedAnonId || "ANON-CTZ-0482"}</strong>
+              <div className="text-[10.5px] text-[var(--text-muted)] font-normal mt-0.5">Officers investigate using this token. Your personal name and phone remain confidential.</div>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <a

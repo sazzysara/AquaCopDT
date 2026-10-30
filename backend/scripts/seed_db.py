@@ -140,10 +140,14 @@ def seed_demo_complaints(db):
         },
     ]
     for cmp_data in demo_complaints:
+        if "anonymous_id" not in cmp_data:
+            cmp_data["anonymous_id"] = f"ANON-CTZ-{cmp_data['id'][-4:]}"
         existing = db.query(Complaint).filter(Complaint.id == cmp_data["id"]).first()
         if not existing:
             complaint = Complaint(**cmp_data)
             db.add(complaint)
+        elif not existing.anonymous_id:
+            existing.anonymous_id = cmp_data["anonymous_id"]
     db.commit()
 
 

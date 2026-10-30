@@ -48,10 +48,12 @@ export interface EncroachmentAlertItem {
   citizenReported?: boolean;
   complaintId?: string;
   citizenName?: string;
+  anonymousId?: string;
 }
 
 export interface CitizenComplaintItem {
   id: string; // e.g. "WTN-2026-00482"
+  anonymousId?: string; // e.g. "ANON-CTZ-0482" (Masked identifier visible to officer & citizen)
   citizenName: string;
   citizenPhone: string;
   waterbodyName: string;

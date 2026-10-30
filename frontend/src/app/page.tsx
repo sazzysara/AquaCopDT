@@ -225,6 +225,7 @@ export default function AquaCopApp() {
         if (Array.isArray(data) && data.length > 0) {
           const mappedComplaints: CitizenComplaintItem[] = data.map((c: any) => ({
             id: c.id,
+            anonymousId: c.anonymous_id || c.anonymousId || `ANON-CTZ-${c.id.slice(-4)}`,
             citizenName: c.citizen_name,
             citizenPhone: c.citizen_phone,
             waterbodyName: c.waterbody_name,
@@ -352,6 +353,7 @@ export default function AquaCopApp() {
     ) as ThreatChangeClass;
 
     // 3. Create linked high-priority alert for officers
+    const anonId = newComplaint.anonymousId || `ANON-CTZ-${newComplaint.id.slice(-4)}`;
     const newAlert: EncroachmentAlertItem = {
       id: `ALT-CITIZEN-${Math.floor(100 + Math.random() * 900)}`,
       waterbodyId: selectedWaterbody.id,
@@ -365,7 +367,7 @@ export default function AquaCopApp() {
       coordinates: [newComplaint.latitude, newComplaint.longitude],
       surveyPlot: newComplaint.surveyNumber,
       detectedAt: "Just now",
-      encroachmentType: `Citizen Grievance by ${newComplaint.citizenName}: ${newComplaint.description.slice(0, 90)}...`,
+      encroachmentType: `Citizen Grievance (${anonId}): ${newComplaint.description.slice(0, 90)}...`,
       bufferDistanceMeters: 12.5,
       disasterImpact: "Obstruction of wetland catchment line. Photographic evidence cross-referenced with Sentinel-2 satellite pass.",
       disasterRiskScore: 94,
@@ -380,7 +382,8 @@ export default function AquaCopApp() {
       delaySavingsDays: 0,
       citizenReported: true,
       complaintId: newComplaint.id,
-      citizenName: newComplaint.citizenName,
+      citizenName: `Anonymous Citizen (${anonId})`,
+      anonymousId: anonId,
     };
 
     setAlerts((prev) => {
@@ -569,6 +572,7 @@ export default function AquaCopApp() {
             </div>
             <EncroachmentHeatmap
               waterbodies={waterbodies}
+              complaints={complaints}
               selectedWaterbody={selectedWaterbody}
               onSelectWaterbody={setSelectedWaterbody}
               onTriggerEnforcement={handleTriggerEnforcement}
@@ -719,6 +723,7 @@ export default function AquaCopApp() {
             {currentTab === "satellite" && (
               <EncroachmentHeatmap
                 waterbodies={waterbodies}
+                complaints={complaints}
                 selectedWaterbody={selectedWaterbody}
                 onSelectWaterbody={setSelectedWaterbody}
                 onTriggerEnforcement={handleTriggerEnforcement}

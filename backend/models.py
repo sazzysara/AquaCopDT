@@ -82,6 +82,7 @@ class Complaint(Base):
     __tablename__ = "complaints"
 
     id = Column(String, primary_key=True)
+    anonymous_id = Column(String, index=True, nullable=True)  # Secure pseudonym token (e.g. "ANON-CTZ-0482")
     citizen_id = Column(String, ForeignKey("users.id"), nullable=True)
     citizen_name = Column(String, nullable=False)
     citizen_phone = Column(String, nullable=True)

@@ -293,8 +293,11 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
       });
     }
 
+    const anonymousId = `ANON-CTZ-${trackingId.slice(-4)}`;
+
     const newComplaintItem: CitizenComplaintItem = {
       id: trackingId,
+      anonymousId,
       citizenName: currentCitizenName,
       citizenPhone: "+91 98402 77102",
       waterbodyName: selectedWaterbodyName,
@@ -340,7 +343,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
         if (onAddNewComplaint) {
           onAddNewComplaint(newComplaintItem);
         }
-        setSubmissionSuccessToast(`Complaint ${trackingId} successfully filed with ${photoList.length} photo(s) & ${docList.length} document(s)!`);
+        setSubmissionSuccessToast(`Complaint ${trackingId} filed! Assigned Anonymous Case Token: ${anonymousId}. Officers will investigate without seeing your personal identity.`);
         setDescription("");
         setUploadedFiles([]);
         setIsFilingPage(false);
@@ -461,6 +464,14 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
             <span className="text-[11px] font-mono-val px-2.5 py-1 rounded bg-[var(--bg-base)] border border-[var(--border)] text-[var(--text-muted)] self-start sm:self-auto">
               Statutory Form 1-B
             </span>
+          </div>
+
+          {/* Whistleblower Identity Protection Notice */}
+          <div className="p-3.5 rounded-[10px] bg-amber-500/10 border border-amber-500/30 text-xs flex items-center gap-3">
+            <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div className="text-[11.5px] text-[var(--text-secondary)]">
+              <strong className="text-amber-800 dark:text-amber-300 font-semibold">Whistleblower Identity Safeguard Active:</strong> Investigating officers only see your system-generated Anonymous Case Token (e.g. <span className="font-mono-val font-bold text-amber-700 dark:text-amber-300">ANON-CTZ-XXXX</span>). Your personal name, phone number, and account details are strictly confidential.
+            </div>
           </div>
 
           <form onSubmit={handleSubmitComplaint} className="space-y-6">
@@ -1231,12 +1242,15 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
               >
                 {/* Top Row: Tracking Pill & Status Badge */}
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="px-3 py-1 rounded-[6px] bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-mono-val font-bold">
                       {item.id}
                     </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[10px] font-mono-val font-semibold flex items-center gap-1" title="This anonymous token is the only ID visible to investigating officers">
+                      🛡️ Officer Token: <strong>{item.anonymousId || `ANON-CTZ-${item.id.slice(-4)}`}</strong>
+                    </span>
                     <span className="text-[10px] font-mono-val px-2 py-0.5 rounded bg-[var(--bg-base)] text-[var(--text-muted)] border border-[var(--border)]">
-                      By {item.citizenName}
+                      By You ({item.citizenName})
                     </span>
                   </div>
 
@@ -1407,6 +1421,18 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
 
             {/* Evidence & Case Information */}
             <div className="grid grid-cols-2 gap-4 text-xs font-mono-val bg-[var(--bg-base)] p-4 rounded-[10px] border border-[var(--border)]">
+              <div className="col-span-2 p-3 rounded-[8px] bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div>
+                    <span className="font-bold text-amber-800 dark:text-amber-300 block">Whistleblower Anonymity Active</span>
+                    <span className="text-[10.5px] text-[var(--text-secondary)]">Officer-Facing Anonymous Token: <strong className="font-mono text-amber-700 dark:text-amber-400">{activeComplaintDetails.anonymousId || `ANON-CTZ-${activeComplaintDetails.id.slice(-4)}`}</strong>. Your real name and phone are masked.</span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-mono text-[10px] font-bold shrink-0">
+                  SECURE
+                </span>
+              </div>
               <div>
                 <span className="text-[10px] text-[var(--text-muted)] block">DISTRICT & ZONE</span>
                 <span className="font-semibold text-[var(--text-primary)] font-sans">

@@ -117,6 +117,7 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
       const matchesSearch =
         !q ||
         c.waterbodyName.toLowerCase().includes(q) ||
+        (c.anonymousId && c.anonymousId.toLowerCase().includes(q)) ||
         c.citizenName.toLowerCase().includes(q) ||
         c.id.toLowerCase().includes(q) ||
         c.surveyNumber.toLowerCase().includes(q) ||
@@ -138,6 +139,7 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
       const matchesSearch =
         !q ||
         c.waterbodyName.toLowerCase().includes(q) ||
+        (c.anonymousId && c.anonymousId.toLowerCase().includes(q)) ||
         c.citizenName.toLowerCase().includes(q) ||
         c.id.toLowerCase().includes(q) ||
         c.surveyNumber.toLowerCase().includes(q) ||
@@ -392,8 +394,12 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                             <h4 className="text-sm font-bold text-[var(--text-primary)]">
                               {item.waterbodyName}
                             </h4>
-                            <p className="text-[11px] font-mono-val text-[var(--text-muted)]">
-                              Filed by: <strong className="text-[var(--text-primary)]">{item.citizenName}</strong> · Plot: {item.surveyNumber}
+                            <p className="text-[11px] font-mono-val text-[var(--text-muted)] flex items-center gap-1.5 flex-wrap">
+                              <span>Filed by:</span>
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                                🛡️ Anonymous Citizen ({item.anonymousId || `ANON-CTZ-${item.id.slice(-4)}`})
+                              </span>
+                              <span>· Plot: {item.surveyNumber}</span>
                             </p>
                           </div>
 
@@ -476,12 +482,18 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                   {/* Citizen Identity & Contact Details Card */}
                   <div className="p-4 rounded-[10px] bg-[var(--bg-base)] border border-[var(--border)] grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono-val">
                     <div>
-                      <span className="text-[10px] text-[var(--text-muted)] block uppercase">Reporting Citizen</span>
-                      <strong className="text-[var(--text-primary)] block mt-0.5">{inspectingComplaint.citizenName}</strong>
+                      <span className="text-[10px] text-[var(--text-muted)] block uppercase">Reporting Identity</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20 text-[11px]">
+                          🛡️ {inspectingComplaint.anonymousId || `ANON-CTZ-${inspectingComplaint.id.slice(-4)}`}
+                        </span>
+                      </div>
+                      <span className="text-[9.5px] text-[var(--text-muted)] block mt-0.5">Whistleblower Safeguarded</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-[var(--text-muted)] block uppercase">Contact Phone</span>
-                      <strong className="text-[var(--text-primary)] block mt-0.5">{inspectingComplaint.citizenPhone || "+91 98402 77102"}</strong>
+                      <span className="text-[10px] text-[var(--text-muted)] block uppercase">Citizen Contact</span>
+                      <strong className="text-[var(--text-secondary)] block mt-0.5 text-[11px]">Encrypted Relay Active</strong>
+                      <span className="text-[9.5px] text-[var(--text-muted)] block mt-0.5">Phone hidden for protection</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-[var(--text-muted)] block uppercase">Lodged Date</span>
@@ -837,7 +849,7 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                       <p className="text-xs font-mono-val text-[var(--text-muted)]">
                         Cadastral Survey Plot: <span className="text-[var(--text-primary)] font-semibold">{inspectingAlert.surveyPlot}</span>
                         {inspectingAlert.citizenName && (
-                          <span> · Filed by Citizen: <strong className="text-[var(--color-primary)]">{inspectingAlert.citizenName}</strong></span>
+                          <span> · Filed by: <strong className="text-amber-600 dark:text-amber-400 font-bold">🛡️ Anonymous Citizen ({inspectingAlert.anonymousId || inspectingAlert.complaintId})</strong></span>
                         )}
                       </p>
                     </div>
@@ -856,7 +868,7 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                       <div className="flex items-center gap-2">
                         <Inbox className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span className="text-[var(--text-primary)]">
-                          Triggered by public citizen grievance <strong>#{inspectingAlert.complaintId}</strong> ({inspectingAlert.citizenName}).
+                          Triggered by public citizen grievance <strong>#{inspectingAlert.complaintId}</strong> (Token: <span className="font-mono-val font-bold text-amber-600 dark:text-amber-400">🛡️ {inspectingAlert.anonymousId || `ANON-CTZ-${inspectingAlert.complaintId?.slice(-4)}`}</span>).
                         </span>
                       </div>
                       <button
@@ -1124,7 +1136,9 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                       <div className="text-xs text-[var(--text-secondary)] font-mono-val space-y-0.5 pt-1 border-t border-[var(--border)]">
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] text-[var(--text-muted)]">Citizen:</span>
-                          <span className="font-semibold text-[var(--text-primary)]">{item.citizenName}</span>
+                          <span className="font-semibold text-amber-600 dark:text-amber-400 font-mono-val">
+                            🛡️ {item.anonymousId || `ANON-CTZ-${item.id.slice(-4)}`}
+                          </span>
                         </div>
                         {item.deletedAt && (
                           <div className="flex items-center justify-between">
@@ -1233,14 +1247,14 @@ export const OfficerPortal: React.FC<OfficerPortalProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono-val pt-1">
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block uppercase">Withdrawn By</span>
-                        <span className="font-semibold text-[var(--text-primary)]">
-                          {inspectingDeletedComplaint.deletedBy || inspectingDeletedComplaint.citizenName}
+                        <span className="font-semibold text-amber-600 dark:text-amber-400 font-mono-val">
+                          🛡️ {inspectingDeletedComplaint.anonymousId || `ANON-CTZ-${inspectingDeletedComplaint.id.slice(-4)}`}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-[var(--text-muted)] block uppercase">Citizen Phone</span>
-                        <span className="font-semibold text-[var(--text-primary)]">
-                          {inspectingDeletedComplaint.citizenPhone}
+                        <span className="text-[10px] text-[var(--text-muted)] block uppercase">Citizen Contact</span>
+                        <span className="font-semibold text-[var(--text-muted)] text-[11px]">
+                          Masked (Whistleblower Relay)
                         </span>
                       </div>
                       <div>

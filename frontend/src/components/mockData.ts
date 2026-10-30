@@ -278,6 +278,7 @@ export const INITIAL_ALERTS: EncroachmentAlertItem[] = [
 export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
   {
     id: "WTN-2026-00482",
+    anonymousId: "ANON-CTZ-0482",
     citizenName: "Priya Sharma",
     citizenPhone: "+91 98402 77102",
     waterbodyName: "Pallikaranai Wetland",
@@ -308,6 +309,7 @@ export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
   },
   {
     id: "WTN-2026-00479",
+    anonymousId: "ANON-CTZ-0479",
     citizenName: "Priya Sharma",
     citizenPhone: "+91 98402 77102",
     waterbodyName: "Poondi Reservoir",
@@ -336,6 +338,7 @@ export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
   },
   {
     id: "WTN-2026-00465",
+    anonymousId: "ANON-CTZ-0465",
     citizenName: "Priya Sharma",
     citizenPhone: "+91 98402 77102",
     waterbodyName: "Madurantakam Lake",
@@ -363,6 +366,7 @@ export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
   },
   {
     id: "WTN-2026-00450",
+    anonymousId: "ANON-CTZ-0450",
     citizenName: "Priya Sharma",
     citizenPhone: "+91 98402 77102",
     waterbodyName: "Pulicat Lake",
@@ -393,6 +397,7 @@ export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
 export const INITIAL_DELETED_COMPLAINTS: CitizenComplaintItem[] = [
   {
     id: "WTN-2026-00388",
+    anonymousId: "ANON-CTZ-0388",
     citizenName: "Priya Sharma",
     citizenPhone: "+91 98402 77102",
     waterbodyName: "Madhavaram Lake",

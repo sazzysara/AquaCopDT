@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import { Waterbody } from "./types";
+import { Waterbody, CitizenComplaintItem } from "./types";
 import {
   Satellite,
   Layers,
@@ -35,6 +35,7 @@ const SatelliteMapViewer = dynamic(
 
 interface EncroachmentHeatmapProps {
   waterbodies: Waterbody[];
+  complaints?: CitizenComplaintItem[];
   selectedWaterbody: Waterbody;
   onSelectWaterbody: (wb: Waterbody) => void;
   onTriggerEnforcement: (wb: Waterbody) => void;
@@ -42,6 +43,7 @@ interface EncroachmentHeatmapProps {
 
 export const EncroachmentHeatmap: React.FC<EncroachmentHeatmapProps> = ({
   waterbodies,
+  complaints,
   selectedWaterbody,
   onSelectWaterbody,
   onTriggerEnforcement,
@@ -187,6 +189,7 @@ export const EncroachmentHeatmap: React.FC<EncroachmentHeatmapProps> = ({
       <div className="w-full">
         <SatelliteMapViewer
           waterbodies={waterbodies}
+          complaints={complaints}
           selectedWaterbody={selectedWaterbody}
           onSelectWaterbody={onSelectWaterbody}
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Waterbody, EncroachmentAlertItem } from "./types";
+import { Waterbody, EncroachmentAlertItem, CitizenComplaintItem } from "./types";
 import {
   Layers,
   MapPin,
@@ -24,6 +24,7 @@ interface SatelliteMapViewerProps {
   selectedWaterbody: Waterbody;
   onSelectWaterbody: (wb: Waterbody) => void;
   alerts?: EncroachmentAlertItem[];
+  complaints?: CitizenComplaintItem[];
 }
 
 // Complete Tamil Nadu Coastline Coordinates (Coromandel Coast from Pulicat to Kanniyakumari)
@@ -172,7 +173,8 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
   waterbodies,
   selectedWaterbody,
   onSelectWaterbody,
-  alerts = []
+  alerts = [],
+  complaints = []
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -185,12 +187,14 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
   const coastlineLayerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
   const hotspotsLayerRef = useRef<any>(null);
+  const complaintsLayerRef = useRef<any>(null);
 
   // Layer switches & basemap mode (Google Maps style: satellite | street | terrain)
   const [mapMode, setMapMode] = useState<"satellite" | "street" | "terrain">("satellite");
   const [showCoastline, setShowCoastline] = useState(true);
   const [showNdwiOverlay, setShowNdwiOverlay] = useState(true);
   const [showAlertHotspots, setShowAlertHotspots] = useState(true);
+  const [showComplaints, setShowComplaints] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [mapExtent, setMapExtent] = useState<"tn_state" | "basin_zoom">("basin_zoom");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -316,6 +320,10 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
 
+      // 6. Anonymous Complaints Spatial Layer Group
+      const complaintsGroup = L.layerGroup().addTo(map);
+      complaintsLayerRef.current = complaintsGroup;
+
       setIsMapReady(true);
     });
 
@@ -414,6 +422,77 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
       }).addTo(markersGroup);
     });
   }, [isMapReady, selectedWaterbody, waterbodies, mapMode, onSelectWaterbody]);
+
+  // 2b. Render Anonymous Citizen Complaints connected to backend spatial map structure
+  useEffect(() => {
+    const L = leafletLibRef.current;
+    const map = mapInstanceRef.current;
+    const complaintsGroup = complaintsLayerRef.current;
+    if (!L || !map || !complaintsGroup) return;
+
+    complaintsGroup.clearLayers();
+    if (!showComplaints) return;
+
+    complaints.forEach((c) => {
+      if (!c.latitude || !c.longitude || c.isDeleted) return;
+
+      const anonId = c.anonymousId || `ANON-CTZ-${c.id.slice(-4)}`;
+      const isVerified = c.satelliteCrosscheckStatus === "VERIFIED_ANOMALY";
+      const pinColor = isVerified ? "#d97706" : "#f59e0b";
+
+      const iconHtml = `
+        <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; cursor: pointer;">
+          <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: ${pinColor}33; animation: pulse 2.2s infinite;"></div>
+          <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: ${pinColor}; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg style="width: 12px; height: 12px; color: #ffffff;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div style="position: absolute; top: -14px; background: #1e293b; color: #fde68a; border: 1px solid #f59e0b88; font-family: monospace; font-size: 8.5px; font-weight: bold; padding: 1px 5px; border-radius: 3px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.6);">
+            ${anonId}
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: "custom-complaint-pin",
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+
+      const marker = L.marker([c.latitude, c.longitude], { icon: customIcon }).addTo(complaintsGroup);
+
+      const popupHtml = `
+        <div style="font-family: sans-serif; font-size: 11.5px; min-width: 230px; color: #0f172a; padding: 2px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 6px;">
+            <span style="background: #fef3c7; color: #b45309; font-family: monospace; font-weight: bold; font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #fde68a;">
+              🛡️ ${anonId}
+            </span>
+            <span style="font-size: 10px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 1px 6px; border-radius: 3px;">
+              ${c.status}
+            </span>
+          </div>
+          <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${c.waterbodyName}</div>
+          <div style="color: #475569; font-size: 11px; margin-top: 2px;">Survey Plot: <strong>${c.surveyNumber}</strong> · ${c.cityZone}</div>
+          <div style="color: #64748b; font-size: 11px; margin-top: 4px; line-height: 1.4;">
+            "${c.description.slice(0, 110)}..."
+          </div>
+          <div style="margin-top: 8px; padding: 6px 8px; background: #f8fafc; border-radius: 6px; font-size: 10.5px; color: #334155; border: 1px solid #e2e8f0;">
+            <div style="color: #b45309; font-weight: bold;">🛡️ Whistleblower Safeguard Active</div>
+            <div style="color: #64748b; font-size: 9.5px; margin-top: 1px;">Officer and citizen only share Case Token: <strong>${anonId}</strong>. Citizen's identity and phone are strictly masked.</div>
+          </div>
+          <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #059669; font-weight: bold;">
+            <span>🛰️ ${c.satelliteCrosscheckStatus}</span>
+            <span style="color: #64748b; font-weight: normal; font-family: monospace;">${c.submittedDate || "Recent"}</span>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml);
+      marker.bindTooltip(`🛡️ Grievance ${anonId}: ${c.waterbodyName} (${c.surveyNumber})`, { sticky: true });
+    });
+  }, [isMapReady, complaints, showComplaints]);
 
   // 3. Smooth flyTo camera animation when target waterbody changes
   useEffect(() => {
@@ -674,6 +753,11 @@ export const SatelliteMapViewer: React.FC<SatelliteMapViewerProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] inline-block shadow-[0_0_6px_#f97316]"></span>
             <span className="text-[#fdba74] text-[11px] font-medium">Assigned Complaint</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#d97706] inline-block shadow-[0_0_6px_#d97706]"></span>
+            <span className="text-[#fde68a] text-[11px] font-medium">Anonymous Grievance Pin</span>
           </div>
 
           <div className="flex items-center gap-1.5">

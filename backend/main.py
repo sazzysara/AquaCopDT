@@ -559,17 +559,84 @@ def calculate_evidence_score(has_valid_gps: bool, is_recent_timestamp: bool, nea
     return min(100, score)
 
 
+# ── Geospatial Complaint Map & Whistleblower Anonymity Structure ─────────────
+class SpatialComplaintMap:
+    """
+    In-memory and spatial graph structure connecting anonymous citizen complaints
+    to precise coordinates, waterbodies, and survey plots without exposing citizen PII.
+    """
+    def __init__(self):
+        self.by_anon_id = {}
+        self.by_waterbody = {}
+
+    def register(self, c: Complaint):
+        anon_id = c.anonymous_id or f"ANON-CTZ-{c.id[-4:]}"
+        node = {
+            "anonymous_id": anon_id,
+            "tracking_id": c.id,
+            "coordinates": [c.lat, c.lon],
+            "waterbody_name": c.waterbody_name,
+            "survey_number": c.survey_number,
+            "city_zone": c.city_zone,
+            "description": c.description,
+            "evidence_type": c.evidence_type,
+            "satellite_crosscheck": c.satellite_crosscheck,
+            "status": c.status,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "2026-10-10 12:00",
+            "geojson": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [c.lon, c.lat]
+                },
+                "properties": {
+                    "anonymous_id": anon_id,
+                    "tracking_id": c.id,
+                    "waterbody_name": c.waterbody_name,
+                    "survey_number": c.survey_number,
+                    "status": c.status,
+                    "satellite_crosscheck": c.satellite_crosscheck,
+                    "masked_reporter": f"Anonymous Citizen ({anon_id})"
+                }
+            }
+        }
+        self.by_anon_id[anon_id] = node
+        wb = c.waterbody_name
+        if wb not in self.by_waterbody:
+            self.by_waterbody[wb] = []
+        if anon_id not in self.by_waterbody[wb]:
+            self.by_waterbody[wb].append(anon_id)
+        return node
+
+    def get_all_features(self):
+        return [node["geojson"] for node in self.by_anon_id.values()]
+
+    def get_node(self, anon_id: str):
+        return self.by_anon_id.get(anon_id)
+
+SPATIAL_COMPLAINT_MAP = SpatialComplaintMap()
+
+
 @app.get("/api/complaints")
 def list_complaints(db: Session = Depends(get_db)):
     complaints = db.query(Complaint).order_by(Complaint.created_at.desc()).all()
     results = []
     for c in complaints:
+        if not c.anonymous_id:
+            c.anonymous_id = f"ANON-CTZ-{c.id[-4:]}"
+            db.commit()
+
+        # Register in backend spatial map structure
+        SPATIAL_COMPLAINT_MAP.register(c)
+
         dist = "Chengalpattu" if ("Pallikaranai" in c.waterbody_name or "Madurantakam" in c.waterbody_name) else "Tiruvallur" if ("Poondi" in c.waterbody_name or "Pulicat" in c.waterbody_name) else "Chennai"
         issue = "Sand Mining" if ("Sand" in (c.description or "") or "sand" in (c.description or "")) else "Commercial Encroachment" if ("Commercial" in (c.description or "") or "Foundation" in (c.description or "") or "foundation" in (c.description or "")) else "Aquaculture Mud Bunds" if ("Aquaculture" in (c.description or "") or "aquaculture" in (c.description or "") or "bund" in (c.description or "")) else "Land Filling"
         authority = "Rajesh Kumar (Field Officer)" if "Poondi" in c.waterbody_name else "M. Senthil Nathan (Tahsildar)" if "Madurantakam" in c.waterbody_name else "R. Vignesh (Coastal Zone Officer)" if "Pulicat" in c.waterbody_name else "Survey Team Alpha (Zonal Enforcement)"
 
         results.append({
             "id": c.id,
+            "anonymous_id": c.anonymous_id,
+            "anonymous_display": f"Anonymous Citizen ({c.anonymous_id})",
             "citizen_name": c.citizen_name,
             "citizen_phone": c.citizen_phone,
             "waterbody_name": c.waterbody_name,
@@ -591,6 +658,38 @@ def list_complaints(db: Session = Depends(get_db)):
     return results
 
 
+@app.get("/api/complaints/map")
+def get_complaints_map(db: Session = Depends(get_db)):
+    """
+    Returns the backend spatial map structure connecting anonymous citizen
+    complaints to coordinates, bounding boxes, and waterbodies.
+    """
+    complaints = db.query(Complaint).all()
+    for c in complaints:
+        if not c.anonymous_id:
+            c.anonymous_id = f"ANON-CTZ-{c.id[-4:]}"
+        SPATIAL_COMPLAINT_MAP.register(c)
+
+    return {
+        "type": "FeatureCollection",
+        "features": SPATIAL_COMPLAINT_MAP.get_all_features(),
+        "total_nodes": len(SPATIAL_COMPLAINT_MAP.by_anon_id),
+        "waterbody_index": SPATIAL_COMPLAINT_MAP.by_waterbody
+    }
+
+
+@app.get("/api/complaints/anonymous/{anon_id}")
+def get_anonymous_complaint_node(anon_id: str, db: Session = Depends(get_db)):
+    """
+    Look up a complaint by its secret anonymous token, known only to the citizen and investigating officer.
+    """
+    c = db.query(Complaint).filter(Complaint.anonymous_id == anon_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Anonymous complaint token not found")
+    node = SPATIAL_COMPLAINT_MAP.register(c)
+    return node
+
+
 @app.post("/api/complaints")
 async def submit_complaint(
     citizen_name: str = Form(...),
@@ -609,6 +708,8 @@ async def submit_complaint(
     - Tamper-resistant perceptual hash (imagehash) duplicate detection
     - Automated Evidence Score calculation
     - Tracking ID generation (e.g. AQ-2026-CHN-0042)
+    - Anonymous Token generation (e.g. ANON-CTZ-0042) for officer-facing whistleblower protection
+    - Spatial map structure node registration
     - Chain of custody SHA-256 hash
     """
     has_exif_gps = False
@@ -646,15 +747,17 @@ async def submit_complaint(
 
     score = calculate_evidence_score(has_valid_gps, is_recent_timestamp, near_alert, is_citizen_verified)
 
-    # Generate sequential tracking ID
+    # Generate sequential tracking ID & unique anonymous token
     count = db.query(Complaint).count() + 1
     tracking_id = f"AQ-2026-CHN-{count:04d}"
+    anonymous_id = f"ANON-CTZ-{count:04d}"
 
     if p_hash_str:
         COMPLAINT_IMAGE_HASHES[tracking_id] = p_hash_str
 
     complaint = Complaint(
         id=tracking_id,
+        anonymous_id=anonymous_id,
         citizen_name=citizen_name,
         citizen_phone=citizen_phone,
         waterbody_name=waterbody_name,
@@ -671,9 +774,14 @@ async def submit_complaint(
     db.add(complaint)
     db.commit()
 
+    # Register in spatial map structure
+    SPATIAL_COMPLAINT_MAP.register(complaint)
+
     return {
         "success": True,
         "tracking_id": tracking_id,
+        "anonymous_id": anonymous_id,
+        "anonymous_display": f"Anonymous Citizen ({anonymous_id})",
         "evidence_score": score,
         "satellite_crosscheck_status": complaint.satellite_crosscheck,
         "evidence_sha256": complaint.evidence_hash,
