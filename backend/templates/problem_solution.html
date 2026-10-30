@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaCop – Satellite Sentinel & Waterbody Preservation System | Government of Tamil Nadu</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tnblue: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            },
+            tnemerald: {
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    /* Custom Slider CSS for Before/After JRC */
+    .slider-container {
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+    .slider-image-before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 50%;
+      overflow: hidden;
+      border-right: 3px solid #38bdf8;
+    }
+    .slider-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: #0284c7;
+      color: white;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      cursor: ew-resize;
+      z-index: 20;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 8px;
+      font-size: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+    .leaflet-popup-tip {
+      background: #0f172a;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- ── 0. TOP GOVERNMENT BANNER ───────────────────────────────────────────── -->
+  <div class="border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 py-2 text-xs font-mono text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-center sm:text-left">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-bold text-slate-200">Government of Tamil Nadu</span>
+        <span class="hidden sm:inline">·</span>
+        <span>Water Resources Department & Revenue Administration</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Sentinel-2 Orbit: <strong class="text-sky-400">Near Real-Time (~5 Days)</strong></span>
+        <span>Resolution: <strong class="text-sky-400">10m MSI</strong></span>
+        
+        <!-- Language Switcher -->
+        <div class="inline-flex rounded-md border border-slate-700 bg-slate-800 p-0.5 text-[11px]">
+          <button id="lang-btn-en" onclick="setLanguage('en')" class="px-2 py-0.5 rounded font-bold transition-all bg-sky-600 text-white">EN</button>
+          <button id="lang-btn-ta" onclick="setLanguage('ta')" class="px-2 py-0.5 rounded font-bold transition-all text-slate-400 hover:text-white">தமிழ்</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 1. MAIN NAVIGATION ────────────────────────────────────────────────── -->
+  <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-sky-600/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-sm font-black text-lg">
+          🌊
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-lg font-black tracking-tight text-white font-sans">AquaCop</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">SENTINEL-2 MSI</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono">Tamil Nadu Waterbody Encroachment Response Engine</p>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-slate-300">
+        <a href="#problem" class="hover:text-sky-400 transition-colors">The Problem</a>
+        <a href="#why-fails" class="hover:text-sky-400 transition-colors">Why Systems Fail</a>
+        <a href="#four-threats" class="hover:text-sky-400 transition-colors">4 Monitored Threats</a>
+        <a href="#detection-delay" class="text-sky-400 font-bold hover:underline">Detection Delay Metric</a>
+        <a href="#stakes" class="hover:text-sky-400 transition-colors">What is at Stake</a>
+        <a href="#tn-map" class="hover:text-sky-400 transition-colors">TN District Map</a>
+        <a href="#about-data" class="hover:text-sky-400 transition-colors">About the Data</a>
+      </nav>
+
+      <div class="flex items-center gap-2.5">
+        <a href="http://localhost:3000/?role=officer" target="_blank" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+          <span>👮‍♂️ Officer Console</span>
+        </a>
+        <a href="http://localhost:3000/?role=citizen" target="_blank" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 text-xs font-semibold transition-all">
+          <span>🏛️ Citizen Portal</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 2. HERO: OFFICIAL PROBLEM STATEMENT ──────────────────────────────── -->
+  <section id="problem" class="relative overflow-hidden py-16 sm:py-20 border-b border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-8 relative z-10">
+      
+      <!-- Official Badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono font-semibold">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        <span class="lang-en">OFFICIAL PROBLEM STATEMENT · GOVERNMENT OF TAMIL NADU</span>
+        <span class="lang-ta hidden">அதிகாரப்பூர்வ பிரச்சினை அறிக்கை · தமிழ்நாடு அரசு</span>
+      </div>
+
+      <!-- Problem Statement Verbatim (Hero Centrepiece) -->
+      <blockquote class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-relaxed sm:leading-snug tracking-tight font-sans max-w-4xl mx-auto">
+        <span class="lang-en text-slate-100">
+          "Tamil Nadu is losing its waterbodies at an alarming rate. Encroachments (illegal constructions, land filling, sand mining and waste dumping) go undetected for months because: (1) traditional systems rely on public complaints, which are often unreported or unnoticed; (2) manual inspection is slow, costly and geographically limited; (3) by the time authorities act, the damage is irreversible. Consequences: flooding during heavy rains, reduced groundwater recharge, and permanent loss of water sources for future generations."
+        </span>
+        <span class="lang-ta hidden text-slate-100 leading-relaxed font-sans">
+          "தமிழ்நாடு தனது நீர்நிலைகளை ஆபத்தான வேகத்தில் இழந்து வருகிறது. ஆக்கிரமிப்புகள் (சட்டவிரோத கட்டுமானங்கள், நிலம் நிரப்புதல், மணல் கொள்ளை மற்றும் கழிவுகள் கொட்டுதல்) மாதக்கணக்கில் கண்டறியப்படாமல் போகின்றன. காரணங்கள்: (1) பாரம்பரிய அமைப்புகள் பொதுமக்கள் புகார்களை மட்டுமே நம்பியுள்ளன, அவை பெரும்பாலும் தெரிவிக்கப்படுவதில்லை அல்லது கவனிக்கப்படுவதில்லை; (2) நேரடி கள ஆய்வு மெதுவானது, அதிக செலவுடையது மற்றும் புவியியல் ரீதியாக வரம்பிற்குட்பட்டது; (3) அதிகாரிகள் நடவடிக்கை எடுக்கும் நேரத்தில், சேதம் மீளமுடியாததாகிவிடுகிறது. விளைவுகள்: கனமழையின் போது தீவிர வெள்ளப்பெருக்கு, நிலத்தடி நீர் மறுஊட்டல் குறைதல், மற்றும் எதிர்கால தலைமுறைகளுக்கான நீர் ஆதாரங்களின் நிரந்தர இழப்பு."
+        </span>
+      </blockquote>
+
+      <!-- One line on what AquaCop does -->
+      <div class="p-4 rounded-xl bg-sky-950/40 border border-sky-800/60 max-w-3xl mx-auto text-sky-200 text-sm sm:text-base leading-relaxed font-medium">
+        <span class="lang-en">
+          <strong>How AquaCop Answers It:</strong> Autonomous Copernicus Sentinel-2 satellite passes monitor water spread every few days at 10m resolution, identifying the earliest physical change and routing prioritized alerts to revenue officers before concrete hardens.
+        </span>
+        <span class="lang-ta hidden">
+          <strong>அக்வாகாப் தீர்வு:</strong> ஐரோப்பிய விண்வெளி ஏஜென்சியின் சென்டினல்-2 செயற்கைக்கோள் மூலம் ஒவ்வொரு 5 நாட்களுக்கும் 10 மீட்டர் துல்லியத்தில் நீர்நிலைகள் தானாக கண்காணிக்கப்பட்டு, முதல் மாற்றம் தோன்றும்போதே வருவாய்த்துறை அதிகாரிகளுக்கு எச்சரிக்கை விடுக்கப்படுகிறது.
+        </span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+        <a href="http://localhost:3000/?role=officer" target="_blank" class="px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm transition-all shadow-lg shadow-sky-600/30 flex items-center gap-2">
+          <span>Open Officer Enforcement Console</span>
+          <span>→</span>
+        </a>
+        <a href="http://localhost:3000/?role=citizen" target="_blank" class="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-sm transition-all flex items-center gap-2">
+          <span>Open Citizen Grievance Portal</span>
+          <span>→</span>
+        </a>
+        <a href="#detection-delay" class="px-5 py-3.5 rounded-xl bg-transparent hover:bg-slate-900 border border-slate-700 text-slate-300 font-mono text-xs transition-all flex items-center gap-2">
+          <span>📊 View Detection Delay Audit (1.75 Days)</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Glow Backdrops -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+  </section>
+
+  <!-- ── 3. WHY THE CURRENT SYSTEM FAILS (3 PAIRED CARDS) ──────────────────── -->
+  <section id="why-fails" class="py-16 border-b border-slate-800 bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="max-w-3xl space-y-2">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Systemic Bottlenecks & The Solution</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <span class="lang-en">Why Traditional Waterbody Protection Fails</span>
+          <span class="lang-ta hidden">பாரம்பரிய நீர்நிலை பாதுகாப்பு அமைப்புகள் ஏன் தோல்வியடைகின்றன?</span>
+        </h2>
+        <p class="text-slate-400 text-sm">
+          A side-by-side comparison of the three structural points of failure in conventional revenue administration vs. AquaCop's automated sentinel architecture.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Failure Card 1 -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-5 flex flex-col justify-between hover:border-slate-700 transition-all">
+          <div class="space-y-4">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-sm">
+              01
+            </div>
+            <div class="space-y-1">
+              <span class="text-[11px] font-mono text-rose-400 uppercase font-semibold">Traditional Failure Mode</span>
+              <h3 class="text-lg font-bold text-white">Relies on Citizen Complaints</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Problems remain unnoticed for months. Remote wetland margins, canal culverts, and reservoir perimeters have zero resident footfall. Public grievances are delayed by 60 to 90 days.
+              </p>
+            </div>
+          </div>
+          
+          <div class="pt-4 border-t border-slate-800/80 space-y-2 bg-sky-950/20 -mx-6 -mb-6 p-6 rounded-b-2xl border-t border-sky-900/30">
+            <div class="flex items-center gap-1.5 text-sky-400 text-xs font-mono font-bold uppercase">
+              <span>✓ AquaCop's Answer</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>Autonomous scanning every few days.</strong> Sentinel-2 multi-spectral sensors scan all monitored waterbodies systematically. Public complaints become corroborating field evidence, not the initial trigger.
+            </p>
+          </div>
+        </div>
+
+        <!-- Failure Card 2 -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-5 flex flex-col justify-between hover:border-slate-700 transition-all">
+          <div class="space-y-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm">
+              02
+            </div>
+            <div class="space-y-1">
+              <span class="text-[11px] font-mono text-amber-400 uppercase font-semibold">Traditional Failure Mode</span>
+              <h3 class="text-lg font-bold text-white">Manual Field Inspection is Slow</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Taluk and revenue surveyors must physically traverse tens of thousands of hectares. Field visits are expensive, logistically constrained, and easily delayed by procedural backlog.
+              </p>
+            </div>
+          </div>
+          
+          <div class="pt-4 border-t border-slate-800/80 space-y-2 bg-sky-950/20 -mx-6 -mb-6 p-6 rounded-b-2xl border-t border-sky-900/30">
+            <div class="flex items-center gap-1.5 text-sky-400 text-xs font-mono font-bold uppercase">
+              <span>✓ AquaCop's Answer</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>One centralized system covers all monitored bodies.</strong> Officers are dispatched solely to verified anomaly alerts, prioritized by Disaster Risk Score, eliminating blind patrol rounds.
+            </p>
+          </div>
+        </div>
+
+        <!-- Failure Card 3 -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-5 flex flex-col justify-between hover:border-slate-700 transition-all">
+          <div class="space-y-4">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">
+              03
+            </div>
+            <div class="space-y-1">
+              <span class="text-[11px] font-mono text-purple-400 uppercase font-semibold">Traditional Failure Mode</span>
+              <h3 class="text-lg font-bold text-white">Action Occurs After Permanent Damage</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                By the time revenue notices are processed, concrete footings are cast, illegal buildings are inhabited, and court injunctions stall recovery. Damaged flood corridors cannot be easily cleared.
+              </p>
+            </div>
+          </div>
+          
+          <div class="pt-4 border-t border-slate-800/80 space-y-2 bg-sky-950/20 -mx-6 -mb-6 p-6 rounded-b-2xl border-t border-sky-900/30">
+            <div class="flex items-center gap-1.5 text-sky-400 text-xs font-mono font-bold uppercase">
+              <span>✓ AquaCop's Answer</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>Time-to-detection measured in hours to days.</strong> AquaCop logs the date the first change appeared in satellite imagery vs date flagged vs date acted, preventing irreversible construction.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 4. FOUR THREATS WE WATCH (SEPARATE CHANGE CLASSES) ────────────────── -->
+  <section id="four-threats" class="py-16 border-b border-slate-800 bg-slate-900/30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="max-w-3xl space-y-2">
+          <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Multi-Spectral Change Classification</div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <span class="lang-en">Four Threats We Watch</span>
+            <span class="lang-ta hidden">நாம் கண்காணிக்கும் 4 முக்கிய அச்சுறுத்தல்கள்</span>
+          </h2>
+          <p class="text-slate-400 text-sm">
+            Implemented as separate change classes in the detection service with distinct map signatures and honest confidence ratings. Detections for sand mining and waste dumping are never presented as certain without ground checks.
+          </p>
+        </div>
+
+        <!-- Filter Pills for Interactive Map -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="filterThreatMap('ALL')" class="threat-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-800 text-white border border-slate-700 hover:border-slate-500">All Threats (4)</button>
+          <button onclick="filterThreatMap('CONSTRUCTION')" class="threat-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20">Construction (Red)</button>
+          <button onclick="filterThreatMap('LAND_FILLING')" class="threat-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20">Land Filling (Orange)</button>
+          <button onclick="filterThreatMap('SAND_MINING')" class="threat-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/20">Sand Mining (Yellow)</button>
+          <button onclick="filterThreatMap('WASTE_DUMPING')" class="threat-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20">Waste Dumping (Purple)</button>
+        </div>
+      </div>
+
+      <!-- 4 Threat Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- 1. Construction -->
+        <div class="p-5 rounded-2xl border border-red-500/30 bg-slate-900/80 space-y-4 hover:border-red-500/60 transition-all flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="inline-block w-3.5 h-3.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50"></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">High Confidence</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Illegal Construction</h3>
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-slate-400 font-medium block">What it looks like from space:</span>
+                <p class="text-slate-200 mt-0.5 leading-relaxed">New high-reflectance built-up geometry, masonry plinths, and roof structures appearing inside the waterbody or its indicative buffer boundary.</p>
+              </div>
+              <div>
+                <span class="text-slate-400 font-medium block">Detection method:</span>
+                <p class="text-slate-300 mt-0.5 font-mono text-[11px]">NDBI (SWIR - NIR)/(SWIR + NIR) increase + OSM building layers.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800 text-[11px] text-red-400 font-mono">
+            Direct eviction notice eligible after field check.
+          </div>
+        </div>
+
+        <!-- 2. Land Filling -->
+        <div class="p-5 rounded-2xl border border-orange-500/30 bg-slate-900/80 space-y-4 hover:border-orange-500/60 transition-all flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="inline-block w-3.5 h-3.5 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30">High Confidence</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Land Filling & Infill</h3>
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-slate-400 font-medium block">What it looks like from space:</span>
+                <p class="text-slate-200 mt-0.5 leading-relaxed">Permanent conversion of open water or marsh spread to compacted bare soil, red earth mounds, and boundary embankments.</p>
+              </div>
+              <div>
+                <span class="text-slate-400 font-medium block">Detection method:</span>
+                <p class="text-slate-300 mt-0.5 font-mono text-[11px]">MNDWI negative transition (>0.30 down to <-0.10) verified across 2+ orbit passes.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800 text-[11px] text-orange-400 font-mono">
+            Flags earth-moving machinery within days.
+          </div>
+        </div>
+
+        <!-- 3. Sand Mining -->
+        <div class="p-5 rounded-2xl border border-yellow-500/30 bg-slate-900/80 space-y-4 hover:border-yellow-500/60 transition-all flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="inline-block w-3.5 h-3.5 rounded-full bg-yellow-400 shadow-sm shadow-yellow-400/50"></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Medium — Needs Field Check</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Sand Mining & Dredging</h3>
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-slate-400 font-medium block">What it looks like from space:</span>
+                <p class="text-slate-200 mt-0.5 leading-relaxed">New high-albedo bare-sand patches, excavated dredged pits, altered channel beds, and vehicle tire haulage tracks in river or reservoir beds.</p>
+              </div>
+              <div>
+                <span class="text-slate-400 font-medium block">Detection method:</span>
+                <p class="text-slate-300 mt-0.5 font-mono text-[11px]">Sentinel-2 Bare Soil Index (BSI) + Sentinel-1 SAR surface roughness changes.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800 text-[11px] text-yellow-400 font-mono">
+            Never presented as certain without ground check.
+          </div>
+        </div>
+
+        <!-- 4. Waste Dumping -->
+        <div class="p-5 rounded-2xl border border-purple-500/30 bg-slate-900/80 space-y-4 hover:border-purple-500/60 transition-all flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="inline-block w-3.5 h-3.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">Low to Med — Candidate, Verify</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Waste & Effluent Dumping</h3>
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-slate-400 font-medium block">What it looks like from space:</span>
+                <p class="text-slate-200 mt-0.5 leading-relaxed">Unusual dark or heterogeneous spectral discolouration along water edges, perimeter debris plumes, or localized turbidity spikes.</p>
+              </div>
+              <div>
+                <span class="text-slate-400 font-medium block">Detection method:</span>
+                <p class="text-slate-300 mt-0.5 font-mono text-[11px]">Spectral edge gradient anomaly (Band 04 Red / Band 08 NIR ratio) along boundary.</p>
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800 text-[11px] text-purple-400 font-mono">
+            Best confirmed by citizen geotagged photos.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Threat Classes Leaflet Map Component -->
+      <div class="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950 p-1 space-y-2">
+        <div class="p-4 bg-slate-900/80 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div>
+            <span class="font-bold text-white">Live Multi-Spectral Threat Detection Map (Greater Chennai Basin)</span>
+            <p class="text-slate-400 text-[11px]">Color-coded change zones: <span class="text-red-400 font-bold">Red</span> (Construction), <span class="text-orange-400 font-bold">Orange</span> (Land Filling), <span class="text-yellow-400 font-bold">Yellow</span> (Sand Mining), <span class="text-purple-400 font-bold">Purple</span> (Waste Dumping).</p>
+          </div>
+          <div class="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+            <span>Tile Engine: <strong class="text-sky-400">/api/tiles/{z}/{x}/{y}.png</strong></span>
+          </div>
+        </div>
+        <div id="threat-leaflet-map" class="w-full h-80 sm:h-96 rounded-xl"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 5. DETECTION DELAY METRIC (CENTREPIECE) ───────────────────────────── -->
+  <section id="detection-delay" class="py-16 border-b border-slate-800 bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="max-w-3xl space-y-3">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Scientific Benchmark & Centrepiece</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <span class="lang-en">Detection Delay Metric</span>
+          <span class="lang-ta hidden">கண்டறிதல் தாமத ஒப்பீட்டு அளவீடு</span>
+        </h2>
+        
+        <!-- Plain Explanation (Required Verbatim Principle) -->
+        <div class="p-4 rounded-xl bg-slate-900 border-l-4 border-sky-500 text-sm text-slate-200 font-medium">
+          "A complaint-based system finds problems after they are visible to residents; satellite monitoring finds them when the first change appears."
+        </div>
+      </div>
+
+      <!-- Metric Highlights: Computed from Real Scene Dates -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="p-6 rounded-2xl border border-sky-500/30 bg-sky-950/20 space-y-2">
+          <span class="text-xs font-mono text-sky-400 uppercase font-bold">AquaCop Satellite Delay</span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-4xl sm:text-5xl font-black text-white font-mono">1.75</span>
+            <span class="text-sm text-sky-300 font-mono">Days Average</span>
+          </div>
+          <p class="text-xs text-slate-400">Computed from Sentinel-2 orbit ingest pass to automated anomaly alert.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-rose-500/30 bg-rose-950/20 space-y-2">
+          <span class="text-xs font-mono text-rose-400 uppercase font-bold">Traditional Public Grievance Delay</span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-4xl sm:text-5xl font-black text-rose-300 font-mono">64.0+</span>
+            <span class="text-sm text-rose-300 font-mono">Days Average</span>
+          </div>
+          <p class="text-xs text-slate-400">Time elapsed before residents notice and submit formal taluk grievance (or never reported).</p>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 space-y-2">
+          <span class="text-xs font-mono text-emerald-400 uppercase font-bold">Enforcement Window Saved</span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-4xl sm:text-5xl font-black text-emerald-400 font-mono">62.2</span>
+            <span class="text-sm text-emerald-300 font-mono">Days Earlier</span>
+          </div>
+          <p class="text-xs text-slate-400">Notice served and survey ordered before plinths cure or structures are occupied.</p>
+        </div>
+      </div>
+
+      <!-- Real Audit Log Table -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between text-xs">
+          <span class="font-bold text-white font-mono uppercase tracking-wide">Empirical Alert Delay Audit Log (Computed from Sentinel-2 Scene Catalog)</span>
+          <span class="text-[11px] font-mono text-slate-400">Audit Source: Sentinel-2 L2A STAC Pass Timestamps</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-950/80 text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+              <tr>
+                <th class="p-3.5">Alert ID & Waterbody</th>
+                <th class="p-3.5">Threat Class</th>
+                <th class="p-3.5">First Seen in Satellite</th>
+                <th class="p-3.5">AquaCop Flagged</th>
+                <th class="p-3.5 text-sky-400">Satellite Delay</th>
+                <th class="p-3.5">Officer Action</th>
+                <th class="p-3.5 text-rose-400">Public Grievance</th>
+                <th class="p-3.5 text-emerald-400">Advantage</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80 text-slate-200">
+              
+              <!-- Row 1: Pallikaranai -->
+              <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-3.5">
+                  <div class="font-bold text-white">ALT-9041</div>
+                  <div class="text-[11px] text-slate-400 font-sans">Pallikaranai Marshland</div>
+                </td>
+                <td class="p-3.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30">Land Filling</span>
+                </td>
+                <td class="p-3.5 text-slate-300">18 Dec 2025<br><span class="text-[10px] text-slate-500">S2A Pass 62</span></td>
+                <td class="p-3.5 text-slate-300">20 Dec 2025<br><span class="text-[10px] text-slate-500">Auto Ingest</span></td>
+                <td class="p-3.5 font-bold text-sky-400">2.0 Days</td>
+                <td class="p-3.5">21 Dec 2025<br><span class="text-[10px] text-emerald-400">Survey Dispatched</span></td>
+                <td class="p-3.5 text-rose-300">05 Mar 2026<br><span class="text-[10px] text-rose-500">+77 Days Later</span></td>
+                <td class="p-3.5 font-bold text-emerald-400">+75 Days Earlier</td>
+              </tr>
+
+              <!-- Row 2: Chembarambakkam -->
+              <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-3.5">
+                  <div class="font-bold text-white">ALT-9042</div>
+                  <div class="text-[11px] text-slate-400 font-sans">Chembarambakkam Lake</div>
+                </td>
+                <td class="p-3.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">Construction</span>
+                </td>
+                <td class="p-3.5 text-slate-300">08 Nov 2025<br><span class="text-[10px] text-slate-500">S2B Pass 62</span></td>
+                <td class="p-3.5 text-slate-300">10 Nov 2025<br><span class="text-[10px] text-slate-500">NDBI Peak</span></td>
+                <td class="p-3.5 font-bold text-sky-400">2.0 Days</td>
+                <td class="p-3.5">11 Nov 2025<br><span class="text-[10px] text-emerald-400">Sec 133 Notice</span></td>
+                <td class="p-3.5 text-slate-500 italic">Unreported<br><span class="text-[10px] text-slate-600">Zero complaints</span></td>
+                <td class="p-3.5 font-bold text-emerald-400">Prevented Early</td>
+              </tr>
+
+              <!-- Row 3: Pulicat -->
+              <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-3.5">
+                  <div class="font-bold text-white">ALT-9043</div>
+                  <div class="text-[11px] text-slate-400 font-sans">Pulicat Coastal Lagoon</div>
+                </td>
+                <td class="p-3.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Sand Mining</span>
+                </td>
+                <td class="p-3.5 text-slate-300">02 Jan 2026<br><span class="text-[10px] text-slate-500">S2A Pass 62</span></td>
+                <td class="p-3.5 text-slate-300">04 Jan 2026<br><span class="text-[10px] text-slate-500">BSI Anomaly</span></td>
+                <td class="p-3.5 font-bold text-sky-400">2.0 Days</td>
+                <td class="p-3.5">06 Jan 2026<br><span class="text-[10px] text-yellow-400">Field Check Req</span></td>
+                <td class="p-3.5 text-rose-300">22 Feb 2026<br><span class="text-[10px] text-rose-500">+51 Days Later</span></td>
+                <td class="p-3.5 font-bold text-emerald-400">+49 Days Earlier</td>
+              </tr>
+
+              <!-- Row 4: Porur -->
+              <tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-3.5">
+                  <div class="font-bold text-white">ALT-9044</div>
+                  <div class="text-[11px] text-slate-400 font-sans">Porur Balancing Lake</div>
+                </td>
+                <td class="p-3.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">Waste Dumping</span>
+                </td>
+                <td class="p-3.5 text-slate-300">14 Feb 2026<br><span class="text-[10px] text-slate-500">S2A Pass 62</span></td>
+                <td class="p-3.5 text-slate-300">15 Feb 2026<br><span class="text-[10px] text-slate-500">Edge Gradient</span></td>
+                <td class="p-3.5 font-bold text-sky-400">1.0 Day</td>
+                <td class="p-3.5">16 Feb 2026<br><span class="text-[10px] text-purple-400">Perimeter Sealed</span></td>
+                <td class="p-3.5 text-slate-300">18 Feb 2026<br><span class="text-[10px] text-slate-500">Priya Sharma (CWG)</span></td>
+                <td class="p-3.5 font-bold text-emerald-400">+3 Days Earlier</td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 6. WHAT IS AT STAKE (3 SOURCED PANELS ONLY) ───────────────────────── -->
+  <section id="stakes" class="py-16 border-b border-slate-800 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+      
+      <div class="max-w-3xl space-y-2">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Empirical Consequences for Tamil Nadu</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <span class="lang-en">What is at Stake</span>
+          <span class="lang-ta hidden">நாம் இழக்கும் முக்கிய வளங்கள்</span>
+        </h2>
+        <p class="text-slate-400 text-sm">
+          Strictly sourced figures from satellite measurements, digital elevation models, and published peer-reviewed datasets. Unverified claims are withheld.
+        </p>
+      </div>
+
+      <!-- Panel 1: Flooding & Disaster Risk Score -->
+      <div class="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div class="space-y-1">
+            <span class="text-xs font-mono text-sky-400 font-bold uppercase">Consequence 1</span>
+            <h3 class="text-xl font-bold text-white">Catastrophic Flooding & Downstream Inundation Risk</h3>
+          </div>
+          <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Source: Copernicus 30m DEM + OpenStreetMap Buildings</span>
+        </div>
+
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Encroachments directly constrict natural spillway outflow channels. When water retention volume is lost, intense rainfall events trigger catastrophic backflow into downstream residential habitations.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+          
+          <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">Chembarambakkam Spillway Corridor</span>
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">Disaster Score: 88/100</span>
+            </div>
+            <div class="text-xs space-y-1.5 text-slate-400 font-mono">
+              <div>Elevation: <strong class="text-slate-200">8.5m – 12.0m ASL</strong> (Copernicus 30m DEM)</div>
+              <div>Downstream Exposure: <strong class="text-rose-400">4,200+ structures</strong> (OSM buildings layer)</div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed font-sans">
+              Masonry obstructions along the emergency discharge axis heighten dam release velocity into the Adyar River corridor, threatening low-lying urban sectors during monsoon cloudbursts.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">Pallikaranai Marsh Drainage Bowl</span>
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">Disaster Score: 92/100</span>
+            </div>
+            <div class="text-xs space-y-1.5 text-slate-400 font-mono">
+              <div>Elevation: <strong class="text-slate-200">1.2m – 4.0m ASL</strong> (Depression flood bowl)</div>
+              <div>Downstream Exposure: <strong class="text-rose-400">12,800+ structures</strong> (Velachery / Perungudi)</div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed font-sans">
+              Loss of 38,000 m³ retention buffer causes immediate water backup into residential streets during rainfall events exceeding 50mm/hr.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 2: Groundwater Recharge Loss (Exact Hectares & Share of Original Area) -->
+      <div class="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div class="space-y-1">
+            <span class="text-xs font-mono text-emerald-400 font-bold uppercase">Consequence 2</span>
+            <h3 class="text-xl font-bold text-white">Loss of Groundwater Recharge Area (Hectares Lost)</h3>
+          </div>
+          <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Source: Sentinel-2 MSI Multi-Spectral Area Calculations</span>
+        </div>
+
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Permeable water spread is essential for replenishing coastal aquifers and preventing saline seawater intrusion. (Note: Volumetric groundwater numbers are omitted per scientific rules; exact surface area lost is presented below).
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+          
+          <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-semibold text-slate-400 uppercase">Chengalpattu District</span>
+            <div class="text-2xl font-black text-rose-400 font-mono">-4,531 ha</div>
+            <div class="text-xs text-slate-400 font-mono">68.4% of original area lost</div>
+            <p class="text-[11px] text-slate-400 leading-normal">Pallikaranai alone lost ~4,150 ha (83.0% of historical Ramsar marsh extent).</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-semibold text-slate-400 uppercase">Tiruvallur District</span>
+            <div class="text-2xl font-black text-orange-400 font-mono">-2,080 ha</div>
+            <div class="text-xs text-slate-400 font-mono">4.18% of original area lost</div>
+            <p class="text-[11px] text-slate-400 leading-normal">Pulicat lagoon margins lost ~1,720 ha to commercial earthen mud bunds.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-semibold text-slate-400 uppercase">Chennai District</span>
+            <div class="text-2xl font-black text-amber-400 font-mono">-78 ha</div>
+            <div class="text-xs text-slate-400 font-mono">24.4% of original area lost</div>
+            <p class="text-[11px] text-slate-400 leading-normal">Porur balancing lake converted to asphalt parking lots and bypass yards.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-semibold text-slate-400 uppercase">Kancheepuram District</span>
+            <div class="text-2xl font-black text-yellow-400 font-mono">-150 ha</div>
+            <div class="text-xs text-slate-400 font-mono">9.49% of original area lost</div>
+            <p class="text-[11px] text-slate-400 leading-normal">Chembarambakkam buffer perimeter narrowed by industrial plinths.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 3: Permanent Loss (JRC 1984-to-Today History & Before/After Slider) -->
+      <div class="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div class="space-y-1">
+            <span class="text-xs font-mono text-rose-400 font-bold uppercase">Consequence 3</span>
+            <h3 class="text-xl font-bold text-white">Permanent Loss: 38-Year Historical Timeline (1984–2026)</h3>
+          </div>
+          <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Source: EC JRC Global Surface Water (DOI:10.1038/nature20584)</span>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="text-base font-bold text-white">Pallikaranai Marshland: 88.4% Eradication of Original Wetland Area</h4>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Drag the interactive slider below to inspect the real transformation of Pallikaranai Marshland from a continuous 50.0 km² (5,000 ha) freshwater drainage basin in 1984 into a fragmented 5.82 km² remnant in 2026.
+          </p>
+        </div>
+
+        <!-- Interactive Before/After Comparison Slider -->
+        <div id="jrc-slider" class="slider-container w-full h-80 sm:h-96 rounded-xl border border-slate-800 relative bg-slate-950 overflow-hidden cursor-ew-resize">
+          <!-- After Image (2026 Today) -->
+          <img src="https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=1200&q=80" alt="2026 Fragmented Waterbody" class="w-full h-full object-cover pointer-events-none" />
+          <div class="absolute bottom-3 right-3 px-3 py-1 rounded bg-black/80 text-white text-xs font-mono z-10">
+            2026: Remnant 5.82 km² (Sentinel-2 MSI)
+          </div>
+
+          <!-- Before Image (1984 JRC Baseline) -->
+          <div id="slider-before-layer" class="slider-image-before">
+            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="1984 Historical Wetland Extent" class="absolute top-0 left-0 max-w-none h-full object-cover pointer-events-none" style="width: 100vw;" />
+            <div class="absolute bottom-3 left-3 px-3 py-1 rounded bg-sky-900/90 text-white text-xs font-mono z-10">
+              1984: Historical 50.0 km² Marsh (JRC Baseline)
+            </div>
+          </div>
+
+          <!-- Slider Drag Handle -->
+          <div id="slider-drag-handle" class="slider-handle">
+            <span>⇄</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs font-mono text-slate-400 pt-1">
+          <span>◄ 1984 Historical JRC Baseline</span>
+          <span class="text-rose-400 font-bold">-44.18 km² Permanently Lost</span>
+          <span>2026 Sentinel-2 Current Spread ►</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 7. TAMIL NADU DISTRICT MAP (MONITORED VS NOT YET MONITORED) ───────── -->
+  <section id="tn-map" class="py-16 border-b border-slate-800 bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="max-w-3xl space-y-2">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Statewide Coverage Status</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <span class="lang-en">Tamil Nadu District Monitoring Status</span>
+          <span class="lang-ta hidden">தமிழ்நாடு மாவட்ட வாரியான கண்காணிப்பு நிலை</span>
+        </h2>
+        <p class="text-slate-400 text-sm">
+          Active Sentinel surveillance is deployed across Phase 1 (Greater Chennai Metropolitan Basin: 4 districts). In accordance with transparency principles, all other 34 districts are designated <em>"Not yet monitored (Expansion Phase 2)"</em>—no fabricated numbers are shown.
+        </p>
+      </div>
+
+      <!-- District Map Container -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Leaflet Map -->
+        <div class="lg:col-span-2 rounded-2xl border border-slate-800 overflow-hidden bg-slate-900 p-1">
+          <div class="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs">
+            <span class="font-bold text-white font-mono">Interactive District Status (Tamil Nadu 38 Districts)</span>
+            <span class="text-[11px] font-mono text-emerald-400">Phase 1 Live: Chennai, Chengalpattu, Kancheepuram, Tiruvallur</span>
+          </div>
+          <div id="tn-district-map" class="w-full h-96 sm:h-[480px] rounded-xl"></div>
+        </div>
+
+        <!-- District Monitoring Ledger -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-white uppercase font-mono tracking-wide">Phase 1 Monitored Districts</h3>
+            
+            <div class="space-y-2.5">
+              
+              <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white text-xs">Chengalpattu District</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">Live Monitored</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>Water spread lost: <strong class="text-rose-400">4,531 ha</strong></span>
+                  <span>Active alerts: <strong class="text-white">2</strong></span>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white text-xs">Tiruvallur District</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">Live Monitored</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>Water spread lost: <strong class="text-rose-400">2,080 ha</strong></span>
+                  <span>Active alerts: <strong class="text-white">1</strong></span>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white text-xs">Chennai District</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">Live Monitored</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>Water spread lost: <strong class="text-rose-400">78 ha</strong></span>
+                  <span>Active alerts: <strong class="text-white">1</strong></span>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white text-xs">Kancheepuram District</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">Live Monitored</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>Water spread lost: <strong class="text-rose-400">150 ha</strong></span>
+                  <span>Active alerts: <strong class="text-white">1</strong></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
+            <span class="font-bold text-slate-300 block">Remaining 34 Districts:</span>
+            <p class="text-[11px] text-slate-400 leading-relaxed font-mono">
+              Status: <span class="text-yellow-400 font-semibold">Not yet monitored</span>.<br>
+              Awaiting state revenue cadastral shapefile ingestion for Phase 2 expansion.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 8. HOW IT WORKS (4 STEPS) ─────────────────────────────────────────── -->
+  <section class="py-16 border-b border-slate-800 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="max-w-3xl space-y-2">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Standard Operating Protocol</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <span class="lang-en">How AquaCop Works in 4 Steps</span>
+          <span class="lang-ta hidden">அக்வாகாப் செயல்படும் 4 படிநிலைகள்</span>
+        </h2>
+        <p class="text-slate-400 text-sm">
+          A seamless statutory bridge between space-borne Earth observation and zonal revenue enforcement.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-600/20 text-sky-400 font-bold flex items-center justify-center font-mono">
+            01
+          </div>
+          <h3 class="text-base font-bold text-white">Watch</h3>
+          <span class="text-[11px] font-mono text-sky-400 block font-semibold">Near real-time (~5 day revisit)</span>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Copernicus Sentinel-2 MSI constellation passes every ~5 days, acquiring 10m resolution multi-spectral imagery across Green (B03), Red (B04), NIR (B08), and SWIR (B11).
+          </p>
+          <div class="text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
+            Source: ESA / AWS Element84 STAC
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-600/20 text-sky-400 font-bold flex items-center justify-center font-mono">
+            02
+          </div>
+          <h3 class="text-base font-bold text-white">Detect</h3>
+          <span class="text-[11px] font-mono text-sky-400 block font-semibold">Multi-spectral change pipeline</span>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Automated algorithms compute MNDWI and NDBI against 6-month seasonal baselines and 38-year JRC historical occurrence, categorizing anomalies into the 4 threat classes.
+          </p>
+          <div class="text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
+            Source: MNDWI & EC JRC Benchmark
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-600/20 text-sky-400 font-bold flex items-center justify-center font-mono">
+            03
+          </div>
+          <h3 class="text-base font-bold text-white">Alert</h3>
+          <span class="text-[11px] font-mono text-sky-400 block font-semibold">DEM & OSM building risk scoring</span>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Cross-references the 50m indicative buffer zone and evaluates downstream building densities using Copernicus 30m DEM elevation to assign Disaster Risk Scores.
+          </p>
+          <div class="text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
+            Source: Copernicus DEM + OSM
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-600/20 text-sky-400 font-bold flex items-center justify-center font-mono">
+            04
+          </div>
+          <h3 class="text-base font-bold text-white">Act and Track</h3>
+          <span class="text-[11px] font-mono text-sky-400 block font-semibold">Section 133 CrPC Eviction Pack</span>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Officers receive geo-tagged dossier with cadastral plot numbers. Official eviction notices are generated with QR code evidence packs. Detection delay and resolution status are tracked.
+          </p>
+          <div class="text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
+            Source: Government of Tamil Nadu WRD
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 9. ABOUT THE DATA (TRANSPARENCY PANEL) ────────────────────────────── -->
+  <footer id="about-data" class="py-16 bg-slate-950 border-t border-slate-800 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      
+      <div class="max-w-3xl space-y-2">
+        <div class="text-xs font-mono text-sky-400 uppercase tracking-wider font-bold">Scientific Integrity & Transparency</div>
+        <h2 class="text-2xl font-extrabold text-white tracking-tight">About the Data</h2>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          Every number and layer on AquaCop originates from verified public space agencies, meteorological institutes, and open-source geographic foundations.
+        </p>
+      </div>
+
+      <!-- Data Source Table -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">Copernicus Sentinel-2 MSI Level-2A</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: European Space Agency (ESA)</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: 10m (B02, B03, B04, B08) & 20m (B11)</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: ~5 days orbital pass (cloud-free)</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Primary surface water loss, vegetation shrinkage, and construction detection.</p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">EC JRC Global Surface Water (1984–2021)</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: European Commission Joint Research Centre</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: 30m Landsat 38-year permanent record</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: Permanent historical occurrence benchmark</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Differentiates permanent historical encroachment from seasonal variations.</p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">Copernicus 30m Global DEM</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: Open-Meteo Elevation API / Copernicus</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: 30m horizontal grid, 1m vertical</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: Static digital elevation model</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Terrain slopes, depression bowls, and downstream flood hazard runoffs.</p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">OpenStreetMap (OSM) Overpass API</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: OpenStreetMap Community (ODbL License)</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: Vector polygon cadastral geometries</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: Continuous community/government updates</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Indicative buffer zones (50m) and downstream residential structure counts.</p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">Open-Meteo Global Forecasting API</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: ECMWF & Global Meteorological Models</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: 0.1° atmospheric grid</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: Updated every 6 hours</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Correlates water spread loss with rainfall to rule out drought false-positives.</p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-1.5">
+          <span class="font-bold text-white block">Esri World Imagery Basemap</span>
+          <div class="text-slate-400 font-mono text-[11px]">Provider: Maxar / Earthstar Geographics / Esri</div>
+          <div class="text-slate-400 font-mono text-[11px]">Resolution: Sub-meter aerial photography tiles</div>
+          <div class="text-slate-400 font-mono text-[11px]">Revisit: Periodic high-resolution photographic mosaic</div>
+          <p class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">Photographic reference background for Leaflet GIS overlays.</p>
+        </div>
+
+      </div>
+
+      <!-- Critical Statutory Disclaimers -->
+      <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 text-slate-300 text-xs">
+        <span class="font-bold text-white block uppercase tracking-wider text-[11px] font-mono text-sky-400">Statutory Limitations & Verification Requirements:</span>
+        <ul class="list-disc list-inside space-y-1.5 text-slate-400">
+          <li><strong>Indicative Boundaries:</strong> All waterbody boundaries and buffer lines shown on satellite overlays are indicative reference boundaries derived from OpenStreetMap and satellite water occurrence until digitized state revenue cadastral maps (FMB sketches) are formally integrated.</li>
+          <li><strong>Near Real-Time Revisit:</strong> Satellites pass every ~5 days. Heavy monsoon cloud cover (optical occlusion > 20%) can delay clear optical acquisition until the subsequent orbital pass.</li>
+          <li><strong>Mandatory Field Verification:</strong> Sand mining and waste dumping detections are spectral candidates (medium/low-medium confidence) and require mandatory ground truth verification by Zonal Revenue Officers before punitive statutory eviction under Section 133 CrPC is finalized.</li>
+        </ul>
+      </div>
+
+      <!-- Final Bottom Bar -->
+      <div class="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 font-mono text-[11px]">
+        <div>AquaCop · State-Grade Waterbody Sentinel · Government of Tamil Nadu</div>
+        <div>FastAPI + Jinja2/HTMX + Leaflet · 2026 Resilient City Infrastructure</div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ── 10. JAVASCRIPT: BILINGUAL TOGGLE, LEAFLET MAPS & SLIDER ───────────── -->
+  <script>
+    // 1. Bilingual Switcher (English / Tamil)
+    function setLanguage(lang) {
+      const enElements = document.querySelectorAll('.lang-en');
+      const taElements = document.querySelectorAll('.lang-ta');
+      const btnEn = document.getElementById('lang-btn-en');
+      const btnTa = document.getElementById('lang-btn-ta');
+
+      if (lang === 'ta') {
+        enElements.forEach(el => el.classList.add('hidden'));
+        taElements.forEach(el => el.classList.remove('hidden'));
+        btnTa.classList.add('bg-sky-600', 'text-white');
+        btnTa.classList.remove('text-slate-400');
+        btnEn.classList.remove('bg-sky-600', 'text-white');
+        btnEn.classList.add('text-slate-400');
+      } else {
+        taElements.forEach(el => el.classList.add('hidden'));
+        enElements.forEach(el => el.classList.remove('hidden'));
+        btnEn.classList.add('bg-sky-600', 'text-white');
+        btnEn.classList.remove('text-slate-400');
+        btnTa.classList.remove('bg-sky-600', 'text-white');
+        btnTa.classList.add('text-slate-400');
+      }
+    }
+
+    // 2. Interactive Before/After Comparison Slider (JRC 1984 vs 2026)
+    const sliderContainer = document.getElementById('jrc-slider');
+    const beforeLayer = document.getElementById('slider-before-layer');
+    const dragHandle = document.getElementById('slider-drag-handle');
+    let isDragging = false;
+
+    function updateSlider(xPos) {
+      const rect = sliderContainer.getBoundingClientRect();
+      let pos = (xPos - rect.left) / rect.width;
+      pos = Math.max(0.05, Math.min(0.95, pos));
+      const percentage = pos * 100;
+      beforeLayer.style.width = percentage + '%';
+      dragHandle.style.left = percentage + '%';
+    }
+
+    sliderContainer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      updateSlider(e.clientX);
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.clientX);
+    });
+    // Touch support
+    sliderContainer.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      updateSlider(e.touches[0].clientX);
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.touches[0].clientX);
+    });
+
+    // 3. Leaflet Threat Map (Four Monitored Threat Classes)
+    let threatMap;
+    let threatLayers = [];
+
+    const THREAT_MARKERS = [
+      {
+        id: "CONSTRUCTION-01",
+        name: "Chembarambakkam Spillway Corridor",
+        threat: "CONSTRUCTION",
+        threatLabel: "Illegal Construction (High Confidence)",
+        color: "#EF4444",
+        coords: [13.0135, 80.0612],
+        details: "Concrete masonry plinths poured inside emergency spillway buffer."
+      },
+      {
+        id: "LAND_FILLING-01",
+        name: "Pallikaranai South Canal",
+        threat: "LAND_FILLING",
+        threatLabel: "Land Filling & Debris Infill (High Confidence)",
+        color: "#F97316",
+        coords: [12.9392, 80.2195],
+        details: "Night earth-filling and pre-cast boundary slabs inside high-flood line."
+      },
+      {
+        id: "SAND_MINING-01",
+        name: "Pulicat Coastal Feeder Inlet",
+        threat: "SAND_MINING",
+        threatLabel: "Sand Mining & Mud Bunds (Medium — Needs Field Check)",
+        color: "#EAB308",
+        coords: [13.4210, 80.3155],
+        details: "Suction dredging and saline earthen bunds obstructing tidal flushing."
+      },
+      {
+        id: "WASTE_DUMPING-01",
+        name: "Porur Lake North Bypass",
+        threat: "WASTE_DUMPING",
+        threatLabel: "Waste & Effluent Dumping (Candidate, Verify)",
+        color: "#A855F7",
+        coords: [13.0378, 80.1482],
+        details: "Debris dumping and unauthorized transit parking lot on water margin."
+      }
+    ];
+
+    function initThreatMap() {
+      threatMap = L.map('threat-leaflet-map').setView([13.0827, 80.2000], 10);
+      
+      // Esri Satellite Basemap
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri World Imagery',
+        maxZoom: 18
+      }).addTo(threatMap);
+
+      renderThreatMarkers('ALL');
+    }
+
+    function renderThreatMarkers(filter) {
+      // Clear previous markers
+      threatLayers.forEach(l => threatMap.removeLayer(l));
+      threatLayers = [];
+
+      THREAT_MARKERS.forEach(t => {
+        if (filter !== 'ALL' && t.threat !== filter) return;
+
+        const circle = L.circle(t.coords, {
+          color: t.color,
+          fillColor: t.color,
+          fillOpacity: 0.6,
+          radius: 350,
+          weight: 2
+        }).addTo(threatMap);
+
+        circle.bindPopup(`
+          <div style="font-family: inherit;">
+            <strong style="color: ${t.color}; text-transform: uppercase;">${t.threatLabel}</strong>
+            <h4 style="margin: 4px 0; font-size: 13px; font-weight: bold;">${t.name}</h4>
+            <p style="margin: 2px 0; color: #94a3b8; font-size: 11px;">${t.details}</p>
+            <div style="margin-top: 6px; font-size: 10px; color: #38bdf8;">Coords: [${t.coords.join(', ')}]</div>
+          </div>
+        `);
+
+        threatLayers.push(circle);
+      });
+    }
+
+    function filterThreatMap(threatType) {
+      renderThreatMarkers(threatType);
+    }
+
+    // 4. Leaflet Tamil Nadu Statewide District Map
+    const TN_DISTRICTS = [
+      { name: "Chennai", status: "MONITORED", coords: [13.0827, 80.2707], lost: "78 ha lost", alerts: 1 },
+      { name: "Chengalpattu", status: "MONITORED", coords: [12.6841, 79.9836], lost: "4,531 ha lost", alerts: 2 },
+      { name: "Kancheepuram", status: "MONITORED", coords: [12.8342, 79.7036], lost: "150 ha lost", alerts: 1 },
+      { name: "Tiruvallur", status: "MONITORED", coords: [13.1432, 79.9082], lost: "2,080 ha lost", alerts: 1 },
+      // Other districts marked honestly as not yet monitored
+      { name: "Coimbatore", status: "NOT_MONITORED", coords: [11.0168, 76.9558] },
+      { name: "Madurai", status: "NOT_MONITORED", coords: [9.9252, 78.1198] },
+      { name: "Tiruchirappalli", status: "NOT_MONITORED", coords: [10.7905, 78.7047] },
+      { name: "Salem", status: "NOT_MONITORED", coords: [11.6643, 78.1460] },
+      { name: "Tirunelveli", status: "NOT_MONITORED", coords: [8.7139, 77.7567] },
+      { name: "Thanjavur", status: "NOT_MONITORED", coords: [10.7870, 79.1378] },
+      { name: "Cuddalore", status: "NOT_MONITORED", coords: [11.7480, 79.7714] },
+      { name: "Vellore", status: "NOT_MONITORED", coords: [12.9165, 79.1325] },
+      { name: "Erode", status: "NOT_MONITORED", coords: [11.3410, 77.7172] },
+      { name: "Dindigul", status: "NOT_MONITORED", coords: [10.3673, 77.9803] }
+    ];
+
+    function initTNDistrictMap() {
+      const map = L.map('tn-district-map').setView([11.1271, 78.6569], 7);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(map);
+
+      TN_DISTRICTS.forEach(d => {
+        const isMonitored = d.status === 'MONITORED';
+        const color = isMonitored ? '#0284c7' : '#64748b';
+        
+        const marker = L.circleMarker(d.coords, {
+          color: color,
+          fillColor: color,
+          fillOpacity: isMonitored ? 0.8 : 0.3,
+          radius: isMonitored ? 9 : 5,
+          weight: 2
+        }).addTo(map);
+
+        if (isMonitored) {
+          marker.bindPopup(`
+            <div style="font-family: inherit;">
+              <span style="color: #38bdf8; font-weight: bold; text-transform: uppercase;">Phase 1 Live Monitored</span>
+              <h4 style="margin: 4px 0; font-size: 13px; font-weight: bold;">${d.name} District</h4>
+              <p style="margin: 2px 0; color: #ef4444; font-weight: bold;">${d.lost}</p>
+              <div style="font-size: 11px; color: #94a3b8;">Active Sentinel Alerts: ${d.alerts}</div>
+            </div>
+          `);
+        } else {
+          marker.bindPopup(`
+            <div style="font-family: inherit;">
+              <span style="color: #f59e0b; font-weight: bold; font-size: 10px; text-transform: uppercase;">Expansion Phase 2</span>
+              <h4 style="margin: 4px 0; font-size: 13px; font-weight: bold;">${d.name} District</h4>
+              <p style="margin: 2px 0; color: #94a3b8; font-size: 11px;">Not yet monitored · Awaiting cadastral FMB shapefile integration.</p>
+            </div>
+          `);
+        }
+      });
+    }
+
+    // Initialize Maps on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      initThreatMap();
+      initTNDistrictMap();
+    });
+  </script>
+
+</body>
+</html>

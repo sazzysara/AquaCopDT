@@ -1,15 +1,57 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+.pnp
+.pnp.*
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Next.js
+.next/
+frontend/.next/
+out/
+frontend/out/
+
+# Caches
+backend/cache/
+*.cache
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # OS Files
 .DS_Store
 Thumbs.db
-__MACOSX/
-
-# Dependencies & Build artifacts (safety net for root)
-**/node_modules/
-**/venv/
-**/.venv/
-**/__pycache__/
-**/.next/
-**/build/
-**/dist/
-**/cache/
-*.py[cod]
