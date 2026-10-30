@@ -39,3 +39,4 @@ NDBI = (SWIR - NIR) / (SWIR + NIR) = (B11 - B08) / (B11 + B08)</pre>
     },
   });
 }
+

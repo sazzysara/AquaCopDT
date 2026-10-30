@@ -81,3 +81,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Inspection failed", detail: err.message }, { status: 500 });
   }
 }
+

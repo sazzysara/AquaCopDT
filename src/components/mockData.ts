@@ -1,0 +1,432 @@
+import { Waterbody, EncroachmentAlertItem, CitizenComplaintItem } from "./types";
+
+export const INITIAL_WATERBODIES: Waterbody[] = [
+  {
+    id: "WB-01",
+    name: "Pallikaranai Marshland Complex",
+    district: "Chennai",
+    region: "Southern Coastal Catchment",
+    type: "Freshwater & Brackish Marshland",
+    coordinates: [12.9362, 80.2184],
+    originalAreaSqkm: 50.0,
+    currentAreaSqkm: 23.4,
+    encroachedAreaSqkm: 26.6,
+    ndwiIndex: 0.32,
+    floodRiskScore: 96,
+    status: "CRITICAL_ALERT",
+    activeEncroachmentsCount: 12,
+    lastSatellitePass: "Sentinel-2A · 24 mins ago",
+    description: "Vital stormwater sponge protecting South Chennai. Heavy construction intrusion along Radial Road edge.",
+    historicalYears: [
+      { year: 1995, area: 50.0, builtupDensity: 4 },
+      { year: 2005, area: 41.2, builtupDensity: 18 },
+      { year: 2015, area: 32.5, builtupDensity: 39 },
+      { year: 2026, area: 23.4, builtupDensity: 58 }
+    ]
+  },
+  {
+    id: "WB-04",
+    name: "Porur Urban Balancing Lake",
+    district: "Chennai",
+    region: "Central Urban Drainage Arc",
+    type: "Urban Retention Lake",
+    coordinates: [13.0381, 80.1492],
+    originalAreaSqkm: 3.2,
+    currentAreaSqkm: 2.58,
+    encroachedAreaSqkm: 0.62,
+    ndwiIndex: 0.62,
+    floodRiskScore: 71,
+    status: "HIGH_VULNERABILITY",
+    activeEncroachmentsCount: 3,
+    lastSatellitePass: "Sentinel-2B · 2 hrs ago",
+    description: "Primary overflow regulator for Porur, Ramapuram, and KK Nagar. Illegal compound wall intrusion on north bund.",
+    historicalYears: [
+      { year: 1995, area: 3.2, builtupDensity: 8 },
+      { year: 2005, area: 3.0, builtupDensity: 22 },
+      { year: 2015, area: 2.8, builtupDensity: 38 },
+      { year: 2026, area: 2.58, builtupDensity: 52 }
+    ]
+  },
+  {
+    id: "WB-07",
+    name: "Velachery Storm Lake Basin",
+    district: "Chennai",
+    region: "South-Central Drainage Corridor",
+    type: "Stormwater Retention Basin",
+    coordinates: [12.9815, 80.2180],
+    originalAreaSqkm: 2.65,
+    currentAreaSqkm: 1.95,
+    encroachedAreaSqkm: 0.70,
+    ndwiIndex: 0.48,
+    floodRiskScore: 84,
+    status: "CRITICAL_ALERT",
+    activeEncroachmentsCount: 4,
+    lastSatellitePass: "Sentinel-2A · 1 hr ago",
+    description: "Critical buffer preventing street flooding in Velachery and Madipakkam. Commercial vehicle parking encroachment.",
+    historicalYears: [
+      { year: 1995, area: 2.65, builtupDensity: 12 },
+      { year: 2005, area: 2.35, builtupDensity: 34 },
+      { year: 2015, area: 2.10, builtupDensity: 52 },
+      { year: 2026, area: 1.95, builtupDensity: 66 }
+    ]
+  },
+  {
+    id: "WB-02",
+    name: "Chembarambakkam Catchment Reservoir",
+    district: "Kanchipuram",
+    region: "Western Upstream Basin",
+    type: "Major Flood Balancing Reservoir",
+    coordinates: [13.0112, 80.0571],
+    originalAreaSqkm: 15.8,
+    currentAreaSqkm: 13.1,
+    encroachedAreaSqkm: 2.7,
+    ndwiIndex: 0.58,
+    floodRiskScore: 89,
+    status: "CRITICAL_ALERT",
+    activeEncroachmentsCount: 5,
+    lastSatellitePass: "Landsat-9 · 1 hr ago",
+    description: "Key surplus flood escape route for the Adyar River. Critical buffer zone breach detected on southern perimeter.",
+    historicalYears: [
+      { year: 1995, area: 15.8, builtupDensity: 2 },
+      { year: 2005, area: 15.1, builtupDensity: 9 },
+      { year: 2015, area: 14.2, builtupDensity: 16 },
+      { year: 2026, area: 13.1, builtupDensity: 28 }
+    ]
+  },
+  {
+    id: "WB-03",
+    name: "Pulicat Coastal Estuary & Lagoon",
+    district: "Tiruvallur",
+    region: "Northern Coastal Wetland System",
+    type: "Tidal Lagoon & Mangrove Estuary",
+    coordinates: [13.4183, 80.3125],
+    originalAreaSqkm: 461.2,
+    currentAreaSqkm: 394.8,
+    encroachedAreaSqkm: 66.4,
+    ndwiIndex: 0.44,
+    floodRiskScore: 78,
+    status: "HIGH_VULNERABILITY",
+    activeEncroachmentsCount: 7,
+    lastSatellitePass: "Sentinel-2B · 42 mins ago",
+    description: "Second largest brackish lagoon in India. Illegal commercial bunding obstructing natural tidal inlet flow.",
+    historicalYears: [
+      { year: 1995, area: 461.2, builtupDensity: 1 },
+      { year: 2005, area: 435.0, builtupDensity: 6 },
+      { year: 2015, area: 412.3, builtupDensity: 12 },
+      { year: 2026, area: 394.8, builtupDensity: 22 }
+    ]
+  },
+  {
+    id: "WB-06",
+    name: "Red Hills (Puzhal) Lake Catchment",
+    district: "Tiruvallur",
+    region: "Northwest Drinking Supply Zone",
+    type: "Freshwater Reservoir",
+    coordinates: [13.1932, 80.1983],
+    originalAreaSqkm: 18.2,
+    currentAreaSqkm: 16.4,
+    encroachedAreaSqkm: 1.8,
+    ndwiIndex: 0.65,
+    floodRiskScore: 62,
+    status: "MONITORED",
+    activeEncroachmentsCount: 2,
+    lastSatellitePass: "Sentinel-2A · 3 hrs ago",
+    description: "Major drinking water reservoir. Buffer surveillance active along eastern bund.",
+    historicalYears: [
+      { year: 1995, area: 18.2, builtupDensity: 3 },
+      { year: 2005, area: 17.5, builtupDensity: 11 },
+      { year: 2015, area: 16.9, builtupDensity: 21 },
+      { year: 2026, area: 16.4, builtupDensity: 32 }
+    ]
+  },
+  {
+    id: "WB-05",
+    name: "Muttukadu Coastal Tidal Estuary",
+    district: "Chengalpattu",
+    region: "East Coast Marine Corridor",
+    type: "Coastal Tidal Inlet",
+    coordinates: [12.8224, 80.2452],
+    originalAreaSqkm: 8.4,
+    currentAreaSqkm: 7.92,
+    encroachedAreaSqkm: 0.48,
+    ndwiIndex: 0.71,
+    floodRiskScore: 42,
+    status: "MONITORED",
+    activeEncroachmentsCount: 1,
+    lastSatellitePass: "PlanetScope · 3 hrs ago",
+    description: "Buffer zone stable with active seasonal sandbar monitoring and local fisherfolk surveillance committee.",
+    historicalYears: [
+      { year: 1995, area: 8.4, builtupDensity: 3 },
+      { year: 2005, area: 8.2, builtupDensity: 7 },
+      { year: 2015, area: 8.0, builtupDensity: 14 },
+      { year: 2026, area: 7.92, builtupDensity: 19 }
+    ]
+  }
+];
+
+export const INITIAL_ALERTS: EncroachmentAlertItem[] = [
+  {
+    id: "ALT-9041",
+    waterbodyId: "WB-01",
+    waterbodyName: "Pallikaranai Marshland Complex",
+    severity: "CRITICAL",
+    threatClass: "LAND_FILLING",
+    threatName: "Land Filling & Debris Infill",
+    threatColor: "#F97316",
+    confidenceLabel: "High Confidence",
+    confidenceTier: "HIGH",
+    coordinates: [12.9392, 80.2195],
+    surveyPlot: "Sy. No. 142/A-2 · Ward 168",
+    detectedAt: "Today, 03:14 UTC",
+    encroachmentType: "Night Earth-Filling & Pre-cast Masonry Boundary",
+    bufferDistanceMeters: 8.5,
+    disasterImpact: "Loss of 38,000 m³ retention buffer. Direct backwater reflux to residential colonies in Velachery Sector 4 during 50mm/hr rains.",
+    disasterRiskScore: 92,
+    status: "PENDING_DISPATCH",
+    officerAssigned: "Inspector S. Ramanathan (Enforcement Wing 03)",
+    satelliteImageBefore: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+    satelliteImageAfter: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=600&q=80",
+    imageryDate: "18 Dec 2025",
+    flaggedDate: "20 Dec 2025",
+    detectionDelayDays: 2.0,
+    complaintDate: "05 Mar 2026",
+    delaySavingsDays: 75
+  },
+  {
+    id: "ALT-9042",
+    waterbodyId: "WB-02",
+    waterbodyName: "Chembarambakkam Reservoir",
+    severity: "CRITICAL",
+    threatClass: "CONSTRUCTION",
+    threatName: "Illegal Construction",
+    threatColor: "#EF4444",
+    confidenceLabel: "High Confidence",
+    confidenceTier: "HIGH",
+    coordinates: [13.0135, 80.0612],
+    surveyPlot: "Sy. No. 89/South Perimeter · Kanchipuram Division",
+    detectedAt: "Yesterday, 22:45 UTC",
+    encroachmentType: "Commercial Logistics Yard Plinth Construction",
+    bufferDistanceMeters: 14.2,
+    disasterImpact: "Severe constriction of emergency spillway flood corridor. 2.1x heightened dam release velocity risk towards Tambaram-Adyar junction.",
+    disasterRiskScore: 95,
+    status: "INVESTIGATION_ORDERED",
+    officerAssigned: "Divisional Engineer M. Kavitha",
+    satelliteImageBefore: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80",
+    satelliteImageAfter: "https://images.unsplash.com/photo-1508873696983-2df5293cb325?auto=format&fit=crop&w=600&q=80",
+    imageryDate: "02 Jan 2026",
+    flaggedDate: "03 Jan 2026",
+    detectionDelayDays: 1.0,
+    complaintDate: "14 Feb 2026",
+    delaySavingsDays: 42
+  },
+  {
+    id: "ALT-9043",
+    waterbodyId: "WB-03",
+    waterbodyName: "Pulicat Coastal Estuary",
+    severity: "HIGH",
+    threatClass: "SAND_MINING",
+    threatName: "Riverbed & Lake Sand Mining",
+    threatColor: "#EAB308",
+    confidenceLabel: "Medium Confidence — Likely, requires field verification",
+    confidenceTier: "MEDIUM",
+    coordinates: [13.4210, 80.3155],
+    surveyPlot: "CRZ-I Intertidal Zone · Plot 44",
+    detectedAt: "Yesterday, 14:10 UTC",
+    encroachmentType: "Unauthorized Saline Aquaculture Mud Bunds & Channel Sand Dredging",
+    bufferDistanceMeters: 22.0,
+    disasterImpact: "Tidal flush channel obstruction; 14 hectares of mangrove wetland oxygenation starvation detected on multi-spectral band B11.",
+    disasterRiskScore: 81,
+    status: "EVICTION_NOTICE_ISSUED",
+    officerAssigned: "Coastal Zone Officer R. Vignesh",
+    satelliteImageBefore: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80",
+    satelliteImageAfter: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=600&q=80",
+    imageryDate: "10 Jan 2026",
+    flaggedDate: "12 Jan 2026",
+    detectionDelayDays: 2.0,
+    complaintDate: "28 Feb 2026",
+    delaySavingsDays: 47
+  },
+  {
+    id: "ALT-9044",
+    waterbodyId: "WB-04",
+    waterbodyName: "Porur Urban Balancing Lake",
+    severity: "MODERATE",
+    threatClass: "WASTE_DUMPING",
+    threatName: "Waste & Industrial Effluent Dumping",
+    threatColor: "#A855F7",
+    confidenceLabel: "Low to Medium — Flagged as Candidate, verify",
+    confidenceTier: "LOW_MEDIUM",
+    coordinates: [13.0378, 80.1482],
+    surveyPlot: "Sy. No. 304/C · Valasaravakkam Zone",
+    detectedAt: "2 days ago",
+    encroachmentType: "Debris Dumping & Temporary Vehicle Parking Lot",
+    bufferDistanceMeters: 31.4,
+    disasterImpact: "Perimeter soil compaction preventing natural groundwater recharge. Silt deposit choking storm canal inlet 4.",
+    disasterRiskScore: 74,
+    status: "SEALED",
+    officerAssigned: "Zonal Officer K. Sundar",
+    satelliteImageBefore: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=600&q=80",
+    satelliteImageAfter: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
+    imageryDate: "15 Jan 2026",
+    flaggedDate: "17 Jan 2026",
+    detectionDelayDays: 2.0,
+    complaintDate: "02 Apr 2026",
+    delaySavingsDays: 75
+  }
+];
+
+export const INITIAL_COMPLAINTS: CitizenComplaintItem[] = [
+  {
+    id: "WTN-2026-00482",
+    anonymousId: "ANON-CTZ-0482",
+    citizenName: "Priya Sharma",
+    citizenPhone: "+91 98402 77102",
+    waterbodyName: "Pallikaranai Wetland",
+    district: "Chengalpattu",
+    cityZone: "Zone 14 - Perungudi / Medavakkam",
+    surveyNumber: "Sy. No. 142/A-2",
+    issueType: "Land Filling",
+    description: "Earthmovers dumping construction debris and red soil along the south canal border every night between 1 AM and 4 AM. Precast boundary slabs erected inside wetland high-flood line.",
+    latitude: 12.9391,
+    longitude: 80.2193,
+    evidenceType: "4 Geo-Tagged Photos + Cadastral Deed",
+    satelliteCrosscheckStatus: "VERIFIED_ANOMALY",
+    createdAt: "2026-09-25 10:14",
+    submittedDate: "25 Sep 2026",
+    assignedAuthority: "Survey Team Alpha (Zonal Enforcement)",
+    updatedText: "Updated: Today",
+    status: "Under Review",
+    photoEvidenceUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=600&q=80",
+    photos: [
+      { name: "excavator_filling_marsh_01.jpg", url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=600&q=80", size: "3.4 MB" },
+      { name: "debris_dump_south_canal.jpg", url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80", size: "2.8 MB" },
+      { name: "boundary_pillar_encroachment.jpg", url: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=600&q=80", size: "4.1 MB" }
+    ],
+    documents: [
+      { name: "Revenue_Survey_Deed_Sy142.pdf", size: "1.2 MB", type: "PDF Document" },
+      { name: "GPS_Coordinates_Waypoint_Log.csv", size: "14 KB", type: "CSV Telemetry" }
+    ]
+  },
+  {
+    id: "WTN-2026-00479",
+    anonymousId: "ANON-CTZ-0479",
+    citizenName: "Priya Sharma",
+    citizenPhone: "+91 98402 77102",
+    waterbodyName: "Poondi Reservoir",
+    district: "Tiruvallur",
+    cityZone: "Zone 02 - Tiruvallur Catchment",
+    surveyNumber: "Sy. No. 88/C",
+    issueType: "Sand Mining",
+    description: "Illegal automated suction dredgers operating in upstream feeder channel. Riverbed sand transported via unnumbered tipper trucks.",
+    latitude: 13.1932,
+    longitude: 80.0152,
+    evidenceType: "Video Footage + Tipper Truck Plate Registry",
+    satelliteCrosscheckStatus: "VERIFIED_ANOMALY",
+    createdAt: "2026-09-24 16:30",
+    submittedDate: "24 Sep 2026",
+    assignedAuthority: "Rajesh Kumar (Field Officer)",
+    updatedText: "Updated: Today",
+    status: "Assigned",
+    photoEvidenceUrl: "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=600&q=80",
+    photos: [
+      { name: "sand_dredging_feeder_canal.jpg", url: "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=600&q=80", size: "3.9 MB" },
+      { name: "tipper_trucks_unloading.jpg", url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", size: "2.1 MB" }
+    ],
+    documents: [
+      { name: "Field_Photolog_Poondi.pdf", size: "4.5 MB", type: "PDF Evidence" }
+    ]
+  },
+  {
+    id: "WTN-2026-00465",
+    anonymousId: "ANON-CTZ-0465",
+    citizenName: "Priya Sharma",
+    citizenPhone: "+91 98402 77102",
+    waterbodyName: "Madurantakam Lake",
+    district: "Chengalpattu",
+    cityZone: "Southern Irrigation Perimeter",
+    surveyNumber: "Plot 310 / Bund East",
+    issueType: "Commercial Encroachment",
+    description: "Concrete foundations poured within the 50m statutory no-construction perimeter zone. Encroacher claims commercial lease without statutory WRD clearance.",
+    latitude: 12.5082,
+    longitude: 79.8821,
+    evidenceType: "Photographs + Video Drone Sweep + Patta Extract",
+    satelliteCrosscheckStatus: "VERIFIED_ANOMALY",
+    createdAt: "2026-09-22 09:15",
+    submittedDate: "22 Sep 2026",
+    assignedAuthority: "M. Senthil Nathan (Tahsildar)",
+    updatedText: "Updated: Today",
+    status: "Field Inspection",
+    photoEvidenceUrl: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=80",
+    photos: [
+      { name: "concrete_pillars_in_lakebed.jpg", url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=80", size: "4.2 MB" }
+    ],
+    documents: [
+      { name: "WRD_Demarcation_Sketch_1990.pdf", size: "2.1 MB", type: "Government Cadastre" }
+    ]
+  },
+  {
+    id: "WTN-2026-00450",
+    anonymousId: "ANON-CTZ-0450",
+    citizenName: "Priya Sharma",
+    citizenPhone: "+91 98402 77102",
+    waterbodyName: "Pulicat Lake",
+    district: "Tiruvallur",
+    cityZone: "Coastal Intertidal Zone CRZ-I",
+    surveyNumber: "CRZ-I / Sector 4B",
+    issueType: "Aquaculture Mud Bunds",
+    description: "Illegal commercial aquaculture earthen bunds erected, blocking natural tidal channel flow into mangrove nurseries.",
+    latitude: 13.4183,
+    longitude: 80.3125,
+    evidenceType: "Drone High-Res Orthomosaic + Geo-PDF",
+    satelliteCrosscheckStatus: "VERIFIED_ANOMALY",
+    createdAt: "2026-09-19 14:45",
+    submittedDate: "19 Sep 2026",
+    assignedAuthority: "R. Vignesh (Coastal Zone Officer)",
+    updatedText: "Updated: Today",
+    status: "Action Taken",
+    photoEvidenceUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80",
+    photos: [
+      { name: "saline_bund_demolition_site.jpg", url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80", size: "3.6 MB" }
+    ],
+    documents: [
+      { name: "Eviction_Notice_Served_Order.pdf", size: "850 KB", type: "Court Order" }
+    ]
+  }
+];
+
+export const INITIAL_DELETED_COMPLAINTS: CitizenComplaintItem[] = [
+  {
+    id: "WTN-2026-00388",
+    anonymousId: "ANON-CTZ-0388",
+    citizenName: "Priya Sharma",
+    citizenPhone: "+91 98402 77102",
+    waterbodyName: "Madhavaram Lake",
+    district: "Chennai",
+    cityZone: "Zone 03 - Madhavaram Perimeter",
+    surveyNumber: "Sy. No. 204/1A",
+    issueType: "Temporary Encroachment",
+    description: "Temporary labor shed and construction material dumping along the lake bund access pathway.",
+    latitude: 13.1482,
+    longitude: 80.2314,
+    evidenceType: "2 Geo-Tagged Photographs",
+    satelliteCrosscheckStatus: "VERIFIED_ANOMALY",
+    createdAt: "2026-09-12 11:20",
+    submittedDate: "12 Sep 2026",
+    assignedAuthority: "Zonal Revenue Inspector",
+    updatedText: "Archived: 16 Sep 2026",
+    status: "Withdrawn",
+    isDeleted: true,
+    deletionReason: "Encroachment voluntarily removed / resolved on ground: Builders dismantled the temporary labor shed and cleared all building materials after municipal notice. Bund gradient fully restored.",
+    deletedAt: "16 Sep 2026, 03:45 PM",
+    deletedBy: "Priya Sharma",
+    photoEvidenceUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=600&q=80",
+    photos: [
+      { name: "bund_restored_post_clearance.jpg", url: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=600&q=80", size: "2.8 MB" }
+    ],
+    documents: [
+      { name: "Municipal_Restoration_NOC.pdf", size: "640 KB", type: "Settlement Notice" }
+    ]
+  }
+];
+
+

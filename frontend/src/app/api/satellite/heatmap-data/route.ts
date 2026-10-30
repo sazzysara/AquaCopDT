@@ -15,3 +15,4 @@ export async function GET() {
     disaster_vulnerability: "SEVERE"
   });
 }
+
