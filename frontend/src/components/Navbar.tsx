@@ -52,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const tabTitles: Record<DashboardTab, { section: string; title: string }> = {
     satellite: { section: "MONITOR", title: "Heatmap" },
+    "satellite-comparison": { section: "AI COMPARISON", title: "Satellite Image Comparison" },
     citizen: { section: "REPORTS", title: "Complaints Received" },
     officer: { section: "ENFORCEMENT", title: "Encroachment Alerts" },
     analytics: { section: "METRICS", title: "Analytics" },

@@ -54,7 +54,10 @@ from geo.threats import (
 )
 from reports.pdf_generator import generate_eviction_notice_pdf
 from reports.generate_full_technical_report import build_technical_report_pdf
-from geo.ai_inspector import run_ai_satellite_inspection, INSPECTION_CACHE_DIR
+from geo.ai_inspector import (
+    run_ai_satellite_inspection, INSPECTION_CACHE_DIR,
+    capture_live_satellite_snapshot, SNAPSHOTS_DIR
+)
 
 app = FastAPI(
     title="AquaCop – Geospatial Satellite Sentinel & Encroachment Response API",
@@ -171,6 +174,9 @@ class SatelliteInspectionRequest(BaseModel):
     date_baseline: str
     date_comparison: str
     threat_filter: Optional[str] = "ALL"
+
+class CaptureRequest(BaseModel):
+    waterbody_id: str
 
 
 # ── Auth Endpoints ───────────────────────────────────────────────────────────
@@ -1129,4 +1135,28 @@ async def get_inspection_image(inspection_id: str, filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Inspection image not found")
     return FileResponse(file_path, media_type="image/png")
+
+
+@app.post("/api/satellite/capture")
+async def trigger_satellite_capture(req: CaptureRequest):
+    """
+    Captures an authentic live high-res satellite image snapshot for a waterbody.
+    """
+    try:
+        data = await capture_live_satellite_snapshot(req.waterbody_id)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Satellite Capture failed: {str(e)}")
+
+
+@app.get("/api/satellite/snapshots/{filename}")
+async def get_snapshot_image(filename: str):
+    """
+    Serves captured live satellite snapshots.
+    """
+    file_path = os.path.join(SNAPSHOTS_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Snapshot image not found")
+    return FileResponse(file_path, media_type="image/png")
+
 

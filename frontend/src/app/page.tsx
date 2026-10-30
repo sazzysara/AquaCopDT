@@ -8,6 +8,7 @@ import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
 import { OfficerPortal } from "../components/OfficerPortal";
 import { CitizenPortal } from "../components/CitizenPortal";
 import { FloodSimulator } from "../components/FloodSimulator";
+import { SatelliteComparisonDashboard } from "../components/SatelliteComparisonDashboard";
 import { ComplaintModal } from "../components/ComplaintModal";
 import { OfficerLoginModal } from "../components/OfficerLoginModal";
 import { AuthPage } from "../components/AuthPage";
@@ -137,11 +138,14 @@ export default function AquaCopApp() {
       setIsAuthLoaded(true);
     }
 
-    // Check URL parameters for role routing (e.g. ?role=officer or ?role=citizen)
+    // Check URL parameters for role routing (e.g. ?role=officer or ?role=citizen or ?tab=satellite-comparison)
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const roleParam = params.get("role");
-      if (roleParam === "officer") {
+      const tabParam = params.get("tab");
+      if (tabParam === "satellite-comparison" || tabParam === "comparison") {
+        setCurrentTab("satellite-comparison");
+      } else if (roleParam === "officer") {
         setIsOfficerLoggedIn(true);
         setCurrentTab("officer");
       } else if (roleParam === "citizen") {
@@ -727,6 +731,14 @@ export default function AquaCopApp() {
                 selectedWaterbody={selectedWaterbody}
                 onSelectWaterbody={setSelectedWaterbody}
                 onTriggerEnforcement={handleTriggerEnforcement}
+              />
+            )}
+
+            {currentTab === "satellite-comparison" && (
+              <SatelliteComparisonDashboard
+                waterbodies={waterbodies}
+                selectedWaterbody={selectedWaterbody}
+                onSelectWaterbody={setSelectedWaterbody}
               />
             )}
 

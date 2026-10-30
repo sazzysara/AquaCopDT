@@ -18,10 +18,13 @@ import {
   CheckCircle2,
   Inbox,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  SplitSquareVertical,
+  Camera,
+  Sparkles
 } from "lucide-react";
 
-export type DashboardTab = "satellite" | "analytics" | "officer" | "citizen" | "simulator";
+export type DashboardTab = "satellite" | "satellite-comparison" | "officer" | "citizen" | "analytics" | "simulator";
 
 interface SidebarProps {
   currentTab: DashboardTab;
@@ -90,6 +93,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Satellite,
       badge: "Live",
       badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    },
+    {
+      key: "satellite-comparison" as DashboardTab,
+      label: "Satellite Image Comparison",
+      icon: SplitSquareVertical,
+      badge: "AI Inspect",
+      badgeColor: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
     },
     {
       key: "citizen" as DashboardTab,
