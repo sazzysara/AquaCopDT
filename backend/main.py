@@ -54,6 +54,7 @@ from geo.threats import (
 )
 from reports.pdf_generator import generate_eviction_notice_pdf
 from reports.generate_full_technical_report import build_technical_report_pdf
+from geo.ai_inspector import run_ai_satellite_inspection, INSPECTION_CACHE_DIR
 
 app = FastAPI(
     title="AquaCop – Geospatial Satellite Sentinel & Encroachment Response API",
@@ -164,6 +165,12 @@ class AssignSurveyRequest(BaseModel):
     waterbody_id: str
     officer_assigned: str
     survey_plot: Optional[str] = "Survey Block 142/A-2"
+
+class SatelliteInspectionRequest(BaseModel):
+    waterbody_id: str
+    date_baseline: str
+    date_comparison: str
+    threat_filter: Optional[str] = "ALL"
 
 
 # ── Auth Endpoints ───────────────────────────────────────────────────────────
@@ -1092,3 +1099,34 @@ def get_heatmap_telemetry():
         "total_threat_score": 88.4,
         "disaster_vulnerability": "SEVERE"
     }
+
+
+# ── AI Satellite Temporal Change Inspection ──────────────────────────────────
+@app.post("/api/satellite/inspect")
+async def trigger_satellite_inspection(req: SatelliteInspectionRequest):
+    """
+    Executes AI change detection between two satellite imagery dates for a chosen waterbody.
+    Returns original satellite photo links, AI detection heatmap, and encroachment metrics.
+    """
+    try:
+        result = await run_ai_satellite_inspection(
+            waterbody_id=req.waterbody_id,
+            date_baseline=req.date_baseline,
+            date_comparison=req.date_comparison,
+            threat_filter=req.threat_filter or "ALL"
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI Satellite Inspection failed: {str(e)}")
+
+
+@app.get("/api/satellite/inspections/{inspection_id}/{filename}")
+async def get_inspection_image(inspection_id: str, filename: str):
+    """
+    Serves genuine satellite and AI detected imagery generated for an inspection.
+    """
+    file_path = os.path.join(INSPECTION_CACHE_DIR, inspection_id, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Inspection image not found")
+    return FileResponse(file_path, media_type="image/png")
+
