@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { CitizenComplaintItem, Waterbody, AuthUser } from "./types";
+import { getApiBaseUrl } from "../config/api";
 import {
   FileText,
   UploadCloud,
@@ -333,7 +334,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
     formData.append("latitude", latitude);
     formData.append("longitude", longitude);
 
-    fetch("http://localhost:8001/api/complaints", {
+    fetch(`${getApiBaseUrl()}/api/complaints`, {
       method: "POST",
       body: formData,
     })
@@ -1511,7 +1512,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
                   {activeComplaintDetails.documents.map((doc, idx) => (
                     <a
                       key={idx}
-                      href={`http://localhost:8001/api/reports/eviction-notice/${activeComplaintDetails.id}`}
+                      href={`${getApiBaseUrl()}/api/reports/eviction-notice/${activeComplaintDetails.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       download={`AquaCop_Evidence_${activeComplaintDetails.id}.pdf`}
@@ -1541,7 +1542,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({
 
               <div className="flex items-center gap-2">
                 <a
-                  href={`http://localhost:8001/api/reports/eviction-notice/${activeComplaintDetails.id}`}
+                  href={`${getApiBaseUrl()}/api/reports/eviction-notice/${activeComplaintDetails.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   download={`AquaCop_Evidence_Dossier_${activeComplaintDetails.id}.pdf`}

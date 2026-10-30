@@ -4,6 +4,7 @@ import React from "react";
 import { useTheme } from "./ThemeContext";
 import { DashboardTab } from "./Sidebar";
 import { Waterbody, AuthUser } from "./types";
+import { getApiBaseUrl } from "../config/api";
 import {
   Shield,
   Menu,
@@ -125,7 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Technical Report PDF Download Link */}
         <a
-          href="http://localhost:8001/api/reports/technical-report"
+          href={`${getApiBaseUrl()}/api/reports/technical-report`}
           target="_blank"
           rel="noopener noreferrer"
           download="AquaCop_Technical_Architecture_Report.pdf"

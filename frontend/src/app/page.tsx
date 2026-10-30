@@ -12,12 +12,12 @@ import { SatelliteComparisonDashboard } from "../components/SatelliteComparisonD
 import { ComplaintModal } from "../components/ComplaintModal";
 import { OfficerLoginModal } from "../components/OfficerLoginModal";
 import { AuthPage } from "../components/AuthPage";
-import {
-  INITIAL_WATERBODIES,
+import { INITIAL_WATERBODIES,
   INITIAL_ALERTS,
   INITIAL_COMPLAINTS,
   INITIAL_DELETED_COMPLAINTS,
 } from "../components/mockData";
+import { getApiBaseUrl } from "../config/api";
 import { Waterbody, EncroachmentAlertItem, CitizenComplaintItem, AuthUser, ThreatChangeClass } from "../components/types";
 import { useTheme } from "../components/ThemeContext";
 import {
@@ -153,8 +153,8 @@ export default function AquaCopApp() {
       }
     }
 
-    // Fetch real-time waterbodies from FastAPI backend
-    fetch("http://localhost:8001/api/waterbodies")
+    // Fetch real-time waterbodies from FastAPI backend or built-in API
+    fetch(`${getApiBaseUrl()}/api/waterbodies`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -185,8 +185,8 @@ export default function AquaCopApp() {
       })
       .catch((e) => console.log("Using cached waterbodies", e));
 
-    // Fetch real-time alerts from FastAPI backend
-    fetch("http://localhost:8001/api/alerts")
+    // Fetch real-time alerts from FastAPI backend or built-in API
+    fetch(`${getApiBaseUrl()}/api/alerts`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -222,8 +222,8 @@ export default function AquaCopApp() {
       })
       .catch((e) => console.log("Using cached alerts", e));
 
-    // Fetch real-time complaints from FastAPI backend
-    fetch("http://localhost:8001/api/complaints")
+    // Fetch real-time complaints from FastAPI backend or built-in API
+    fetch(`${getApiBaseUrl()}/api/complaints`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CitizenComplaintItem, Waterbody, AuthUser } from "./types";
+import { getApiBaseUrl } from "../config/api";
 import {
   X,
   UploadCloud,
@@ -79,7 +80,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
     formData.append("latitude", "12.9392");
     formData.append("longitude", "80.2195");
 
-    fetch("http://localhost:8001/api/complaints", {
+    fetch(`${getApiBaseUrl()}/api/complaints`, {
       method: "POST",
       body: formData,
     })
@@ -254,7 +255,7 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <a
-                href={`http://localhost:8001/api/reports/eviction-notice/${waterbodies.find((w) => w.name === selectedWaterbody)?.id || "WB-PALLIKARANAI"}`}
+                href={`${getApiBaseUrl()}/api/reports/eviction-notice/${waterbodies.find((w) => w.name === selectedWaterbody)?.id || "WB-PALLIKARANAI"}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 download="AquaCop_Evidence_Dossier.pdf"

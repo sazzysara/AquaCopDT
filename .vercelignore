@@ -1,0 +1,8 @@
+backend/venv
+backend/cache
+backend/__pycache__
+backend/aquacop.db
+backend/stdout.log
+backend/stderr.log
+.git
+.github

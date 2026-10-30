@@ -30,6 +30,13 @@ import {
   Radio,
   FileText
 } from "lucide-react";
+import { getApiBaseUrl } from "../config/api";
+
+const resolveImageUrl = (url?: string): string => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${getApiBaseUrl()}${url}`;
+};
 
 interface SatelliteComparisonDashboardProps {
   waterbodies: Waterbody[];
@@ -101,7 +108,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
     setIsInspecting(true);
     setInspectionError(null);
     try {
-      const res = await fetch("http://localhost:8001/api/satellite/inspect", {
+      const res = await fetch(`${getApiBaseUrl()}/api/satellite/inspect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -140,7 +147,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
       await new Promise((r) => setTimeout(r, 800));
       setCapturePhase("Orthorectifying & Geo-referencing Sub-Meter Optics...");
 
-      const res = await fetch("http://localhost:8001/api/satellite/capture", {
+      const res = await fetch(`${getApiBaseUrl()}/api/satellite/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ waterbody_id: selectedId }),
@@ -482,7 +489,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
 
             <button
               type="button"
-              onClick={() => setPreviewPhotoUrl(`http://localhost:8001${capturedSnapshot.image_url}`)}
+              onClick={() => setPreviewPhotoUrl(resolveImageUrl(capturedSnapshot.image_url))}
               className="px-3 py-1.5 rounded-[8px] bg-[var(--bg-input)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-primary)] flex items-center gap-1 transition-colors"
             >
               <Eye className="w-3.5 h-3.5 text-cyan-400" />
@@ -570,10 +577,10 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
 
                   <div
                     className="relative group cursor-pointer"
-                    onClick={() => setPreviewPhotoUrl(`http://localhost:8001${inspectionResult.images.baseline_url}`)}
+                    onClick={() => setPreviewPhotoUrl(resolveImageUrl(inspectionResult.images.baseline_url))}
                   >
                     <img
-                      src={`http://localhost:8001${inspectionResult.images.baseline_url}`}
+                      src={resolveImageUrl(inspectionResult.images.baseline_url)}
                       alt="Baseline Epoch Satellite"
                       className="w-full h-[330px] object-cover transition-transform group-hover:scale-[1.01]"
                     />
@@ -610,10 +617,10 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
 
                   <div
                     className="relative group cursor-pointer"
-                    onClick={() => setPreviewPhotoUrl(`http://localhost:8001${inspectionResult.images.comparison_url}`)}
+                    onClick={() => setPreviewPhotoUrl(resolveImageUrl(inspectionResult.images.comparison_url))}
                   >
                     <img
-                      src={`http://localhost:8001${inspectionResult.images.comparison_url}`}
+                      src={resolveImageUrl(inspectionResult.images.comparison_url)}
                       alt="Comparison Epoch Satellite"
                       className="w-full h-[330px] object-cover transition-transform group-hover:scale-[1.01]"
                     />
@@ -652,7 +659,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
                 <div className="relative w-full h-[420px] select-none overflow-hidden bg-black">
                   {/* Underneath: Date 2 (Comparison) */}
                   <img
-                    src={`http://localhost:8001${inspectionResult.images.comparison_url}`}
+                    src={resolveImageUrl(inspectionResult.images.comparison_url)}
                     alt="Comparison Satellite Layer"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -663,7 +670,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
                     style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
                   >
                     <img
-                      src={`http://localhost:8001${inspectionResult.images.baseline_url}`}
+                      src={resolveImageUrl(inspectionResult.images.baseline_url)}
                       alt="Baseline Satellite Layer"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
@@ -715,7 +722,7 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPreviewPhotoUrl(`http://localhost:8001${inspectionResult.images.ai_detected_url}`)}
+                    onClick={() => setPreviewPhotoUrl(resolveImageUrl(inspectionResult.images.ai_detected_url))}
                     className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-[11px] font-mono-val flex items-center gap-1 transition-colors"
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
@@ -726,10 +733,10 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
 
               <div
                 className="relative group cursor-pointer"
-                onClick={() => setPreviewPhotoUrl(`http://localhost:8001${inspectionResult.images.ai_detected_url}`)}
+                onClick={() => setPreviewPhotoUrl(resolveImageUrl(inspectionResult.images.ai_detected_url))}
               >
                 <img
-                  src={`http://localhost:8001${inspectionResult.images.ai_detected_url}`}
+                  src={resolveImageUrl(inspectionResult.images.ai_detected_url)}
                   alt="AI Detected Changes & Encroachment Overlay"
                   className="w-full h-[380px] object-cover transition-transform group-hover:scale-[1.01]"
                 />
@@ -852,17 +859,17 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
 
               <div className="flex items-center gap-2.5 flex-wrap">
                 <a
-                  href={`http://localhost:8001/api/reports/eviction-notice/${inspectionResult.waterbody_id}`}
+                  href={`${getApiBaseUrl()}/api/reports/eviction-notice/${inspectionResult.waterbody_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-[8px] bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono-val font-semibold flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download Section 133 CrPC Notice (PDF)</span>
+                  <span>Download Section 133 CrPC Notice</span>
                 </a>
 
                 <a
-                  href={`http://localhost:8001${inspectionResult.images.ai_detected_url}`}
+                  href={resolveImageUrl(inspectionResult.images.ai_detected_url)}
                   download={`AquaCop_${inspectionResult.inspection_id}_Evidence.png`}
                   className="px-4 py-2 rounded-[8px] bg-[var(--bg-input)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] text-xs font-mono-val font-semibold text-[var(--text-primary)] flex items-center gap-2 transition-colors"
                 >
@@ -935,3 +942,4 @@ export const SatelliteComparisonDashboard: React.FC<SatelliteComparisonDashboard
     </div>
   );
 };
+
